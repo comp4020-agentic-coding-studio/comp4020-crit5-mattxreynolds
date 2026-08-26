@@ -20,14 +20,17 @@ working from an assumed context.
 
 ## The workflow
 
-Three project-local skills carry this prototype from idea to shipped build,
-in order. Each is self-triggering (invoke by name, or just describe the stage
+Four project-local skills carry this prototype from idea to shipped build, in
+order. Each is self-triggering (invoke by name, or just describe the stage
 you're in) --- see each skill for its procedure.
 
 - **`ideate`** --- brainstorm directions, then lock one in once we're both
   convinced.
-- **`plan`** --- turn the locked idea into `PLAN.md`'s decisions and
-  `TASKS.md`'s full task breakdown.
+- **`design`** --- ground, generate, and lock a visual direction into a
+  compact contract in `PLAN.md`, checked against a real rendered slice before
+  the rest of the build touches it.
+- **`plan`** --- turn the locked idea and visual contract into `PLAN.md`'s
+  remaining decisions and `TASKS.md`'s full task breakdown.
 - **`working-loop`** --- execute `TASKS.md` one task at a time, including the
   fine-tuning tail at the end, verifying before marking anything done.
 
@@ -56,6 +59,23 @@ head points at it. Replace it and the `description` meta, and copy the head
 block into any new page. The card URL resolves against the page that names
 it, like any link --- `./card.png` is wrong one directory down, and nothing
 in CI checks it, so look at the deployed head when you add pages.
+
+## The visual contract
+
+The `design` skill locks a visual direction into a compact contract inside
+`PLAN.md` --- palette roles, type roles, spacing scale, one motif line, one
+imagery rule --- before `plan` writes tasks. It isn't a style guide and
+doesn't belong in this file: it's specific to this project, and a different
+prototype should look nothing like it. The `.claude/agents/design-critic.md`
+subagent judges rendered pages against that contract independently, without
+seeing why any decision was made; `working-loop` dispatches it fresh at
+session close and before the final push so visual drift gets caught before
+the crit does. Unlike `pnpm check`, this is a judgment call, not a
+deterministic gate --- it isn't CI-run and doesn't block anything on its own;
+treat its findings as informed observations to weigh, not a verdict to obey
+blindly or to wave away when inconvenient. If it catches the same failure
+mode twice in one project, that rule belongs in the critic's own file, not
+here.
 
 ## The checks (your sensors)
 

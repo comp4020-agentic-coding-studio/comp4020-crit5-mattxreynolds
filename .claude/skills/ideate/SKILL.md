@@ -62,5 +62,5 @@ that happens in Stage 2, explicitly, with the user.
    (drop the draft marker and any "originally considered..." framing --- that
    belongs in git history and, if it's a good story, `PROCESS.md`, not in
    `PLAN.md` itself).
-5. Hand off to the `plan` skill next --- say so explicitly rather than
-   drifting into task breakdown here.
+5. Hand off to the `design` skill next --- say so explicitly rather than
+   drifting into task breakdown or a visual direction here.

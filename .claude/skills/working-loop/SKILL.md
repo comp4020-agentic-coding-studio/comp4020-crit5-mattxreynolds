@@ -53,7 +53,11 @@ that faithfully and catch what planning couldn't have anticipated.
    rendered page has actually been checked at both viewports, not assumed.
    Use two-speed verification: cheap sanity checks while mid-task, the full
    `pnpm check` (plus both viewports) at task close, session close, and full
-   project completion.
+   project completion. For a user-visible task, also check it against
+   `PLAN.md`'s visual contract --- does it actually reuse the patterns the
+   `design` skill's representative slice established, rather than
+   reinventing them. (The `design-critic` itself is dispatched at session
+   close and before the final push, not on every task --- see below.)
 
 8. **Subagent output gets the same scrutiny as your own.** If this task was
    dispatched to a subagent, check its actual diff and the rendered result
@@ -70,13 +74,26 @@ that faithfully and catch what planning couldn't have anticipated.
     If this task involved a correction that landed in the harness --- a rule
     added, a check wired up, an attempt thrown away for a better one --- add
     a rough entry to `PROCESS.md`'s running list now. Most tasks won't
-    produce one; don't manufacture a moment where there isn't one.
+    produce one; don't manufacture a moment where there isn't one. If the
+    `design-critic` flags the same failure mode twice in this project, that's
+    one of these moments: add the rule directly to the critic's own file
+    (`.claude/agents/design-critic.md`), not to `CLAUDE.md` --- the rubric is
+    the reusable part, `PLAN.md`'s contract is not. Keep the addition general
+    the same way the rest of the rubric is --- watch for anything
+    machine-specific (an absolute path, a preview URL, a one-off detail from
+    this project) leaking into a file meant to outlive it.
 
 ## At session close
 
 Leave `TASKS.md` truthfully reflecting real state --- what's actually `Done`
 vs. still `In progress` vs. blocked --- so the next session's orientation
 step reads an accurate picture, not yesterday's intention.
+
+Dispatch the `design-critic` subagent fresh against the current rendered
+state if any user-visible work landed this session, and again before the
+final push regardless --- this is what catches visual drift accumulating
+across a build that a single early critique in `design` can't. Give it every
+page or state that changed since its last run, not just the newest one.
 
 ## When the backlog empties except `Polish`
 

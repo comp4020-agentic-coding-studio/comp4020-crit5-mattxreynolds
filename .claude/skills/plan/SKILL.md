@@ -19,8 +19,16 @@ execute without re-litigating these calls task by task.
 
 ## Precondition
 
-`PLAN.md` must have a locked (not draft) thesis. If it doesn't, stop and hand
-back to the `ideate` skill instead of planning against an unconfirmed idea.
+`PLAN.md` must have a locked (not draft) thesis and a locked (not draft)
+visual contract. Check which is missing and route accordingly, rather than
+writing either yourself to get unblocked:
+
+- No thesis, or thesis marked draft --- hand back to `ideate`.
+- Thesis locked, but no visual contract section at all, or a visual contract
+  still marked `(draft --- not yet validated against a rendered slice)` ---
+  hand back to `design`. A draft marker means steps 5--7 (the slice and its
+  critique) haven't happened yet, even if the contract text itself looks
+  finished.
 
 ## 1. Ground the plan
 
@@ -30,11 +38,11 @@ about what "feels right" to build next.
 
 ## 2. Expand `PLAN.md`
 
-Add whatever durable decisions the build needs beyond the thesis: the design
-system, page/content structure, anything that would otherwise get re-decided
-ad hoc mid-build. Current decisions only, written as if today were the first
-day anyone read them --- no "originally we considered X" history (that's
-git's job).
+Add whatever durable decisions the build needs beyond the thesis and the
+`design` skill's visual contract: page/content structure, anything that
+would otherwise get re-decided ad hoc mid-build. Current decisions only,
+written as if today were the first day anyone read them --- no "originally we
+considered X" history (that's git's job).
 
 ## 3. Write `TASKS.md`
 
@@ -59,6 +67,11 @@ dispatched for a genuinely independent batch), `Blocked`, `Done` (collapsed
 to one line + commit link per entry, per `working-loop`'s convention). Leave
 a `Polish` section present but empty --- it gets populated by review against
 the spec once the main backlog is built, not specified in detail now.
+
+`design`'s hand-off names the files/pages its representative slice already
+built. Seed those straight into `Done` rather than writing fresh backlog
+tasks for them --- the slice is real, finished production code, not a
+throwaway prototype to redo.
 
 ## 4. Confirm before handing off
 
