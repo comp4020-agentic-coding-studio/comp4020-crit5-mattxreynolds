@@ -128,55 +128,53 @@ function level5(): Level {
   };
 }
 
-/** L7: what `jump` is for, and the level that answers the design critic's
- *  second open finding --- that a move card being unable to climb had no
- *  on-screen consequence a stranger could see.
+/** L7: sand, learned by rolling through it rather than by being punished for
+ *  touching it.
  *
- *  Here it has one. The hole sits on high ground no ramp serves, and the hand
- *  is arranged so the ball arrives at the foot of that step with **both** a
- *  move card and the jump still in hand. Arm the move and there is no arrow
- *  toward the hole; arm the jump and there is. The two cards differ visibly,
- *  on the same tile, at the moment it matters --- which a sequence that spends
- *  the move first would never show.
- *
- *  The high ground is on the far side from the ball for the same reason as L4:
- *  a raised slab covers what is behind it. */
+ *  The band crosses the whole board, so there is no way round and the ball
+ *  *will* meet it. The first card is a 4 with only two tiles of run before the
+ *  sand, so the sand visibly eats the rest of it --- the ball stops halfway
+ *  through a move it should have finished, on the one tile that looks
+ *  different. Cause and effect, in one roll. Then the hand still has enough
+ *  left to finish, so the lesson costs a card and not the level. */
 function level7(): Level {
-  const grid = field(3, 4);
-  for (let r = 0; r < 3; r++) grid[r][0] = G(1);
-  grid[1][0] = { terrain: "hole", height: 1 };
+  const grid = field(3, 5);
+  for (let r = 0; r < 3; r++) grid[r][2] = SAND();
+  grid[2][4] = HOLE();
   return {
     id: 7,
     grid,
-    ball: { r: 1, c: 3 },
+    ball: { r: 1, c: 0 },
     hand: [
+      { kind: "move", value: 4 },
       { kind: "move", value: 2 },
       { kind: "move", value: 1 },
-      { kind: "jump", value: 1 },
     ],
   };
 }
 
-/** L8: sand, and the first level that asks for two ideas at once. Sand stops
- *  the ball dead the moment it touches it and throws away whatever movement
- *  was left, so a band two tiles wide costs a card per tile to wade through
- *  --- more cards than the hand has. It has to be jumped, which is checked
- *  rather than hoped for: turn this level's jump into a move of the same value
- *  and a search finds no solution at all. */
+/** L8: the chasm, and what `jump` is for.
+ *
+ *  A missing column instead of a wall. The two cards state their difference
+ *  by doing, one after the other: roll first and the ball runs to the brink
+ *  and stops, in plain view, because there is no ground to carry it on. Then
+ *  the arc card goes over the same gap. Nobody has to notice an arrow that
+ *  isn't there --- which is how the old version of this level taught it, and
+ *  the reason it didn't.
+ *
+ *  A gap says "not this way" more plainly than a raised slab does, and it has
+ *  the side benefit of hiding nothing behind it. */
 function level8(): Level {
-  const grid = field(3, 6);
-  for (let r = 0; r < 3; r++) {
-    grid[r][2] = SAND();
-    grid[r][3] = SAND();
-  }
-  grid[1][5] = HOLE();
+  const grid = field(3, 5);
+  for (let r = 0; r < 3; r++) grid[r][2] = null;
+  grid[1][4] = HOLE();
   return {
     id: 8,
     grid,
     ball: { r: 1, c: 0 },
     hand: [
-      { kind: "move", value: 1 },
-      { kind: "jump", value: 3 },
+      { kind: "move", value: 3 },
+      { kind: "jump", value: 2 },
       { kind: "move", value: 1 },
     ],
   };
