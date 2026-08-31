@@ -104,21 +104,27 @@ not a floor, and the opening curve should be close to insultingly gentle.
 
 ## Visual contract *(draft — not yet validated against a rendered slice)*
 
-- **Palette.** Ground faces `#b6ccab` top / `#94ac8a` left / `#84997a` right,
-  seam `#a3bb98`; sand `#eddcae` stippled; cards `#dfa561`. Exactly one
-  saturated accent — flag red `#d64a3c` — reserved for the hole. Neutrals
-  are warm: the field is a wash from `#e6f1e8` down to `#f8f2e6`.
-- **Type.** Display: Nunito 900, for card values and the level number. Body:
-  Nunito 800, only ever for counts — the game carries no prose.
-- **Spacing.** An 8px scale (8/16/24/32/48). One knob `--w` (tile width) drives
-  every board dimension; card width `--cw` is independent of it.
+- **Palette.** Two committed colours and no others: card orange `#dfa561` for
+  anything you can act on (cards, the restart button), flag red `#d64a3c` for
+  the goal and nothing else. Terrain is one green ramp — fairway `#b6ccab` top
+  / `#94ac8a` left / `#84997a` right, seam `#a3bb98`; raised ground the same
+  ramp two steps darker; sand `#eddcae` stippled. **Higher ground is always
+  darker — one convention, every page.** The field is a wash `#e6f1e8` →
+  `#f8f2e6`.
+- **Type.** Display: Nunito 900, card values and the level number. Body: Nunito
+  800, counts only — the game carries no prose.
+- **Spacing.** 8/16/24/32/48, as `--s1`…`--s6`. One knob `--w` (tile width)
+  drives every board dimension; card width `--cw` is independent.
 - **Motif.** No frame, no panels: a 2:1 isometric board floats on one continuous
-  field, board and hand centred as a single group with the level number and
-  restart pill above. Height is real — tiles are slabs, ramps are tilted
-  planes — and the whole board reads as one solid with a level base.
-- **Imagery.** Geometry only, no illustration and no icon set: terrain is told
-  apart by height, fill and stipple; affordances by one flat triangle lying in
-  the ground plane. The only glyphs are numerals and the restart arrow.
+  field with board and hand centred as a single group, the level number and
+  restart pinned to the viewport gutters above. Height is real — tiles are
+  slabs, ramps are tilted planes — and the board reads as one solid on a level
+  base.
+- **Imagery.** Geometry only, no illustration and no icon set. Terrain is told
+  apart by height, fill and stipple. A direction marker is a stem *and* a head
+  lying in the ground plane: a bare triangle sheared into the plane reads as a
+  wedge pointing at the ball, not as a heading. The only glyphs are numerals,
+  the card's move/jump mark, and the restart arrow.
 
 ## Losing, and the score
 
