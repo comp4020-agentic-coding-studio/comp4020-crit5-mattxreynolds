@@ -129,11 +129,13 @@ not a floor, and the opening curve should be close to insultingly gentle.
   apart by height, fill and stipple. A direction marker is one filled arrow
   lying in the ground plane, sized to stay inside its own tile: split into a
   separate stem and head it comes apart under the shear, and a bare triangle
-  reads as a wedge aimed at the ball rather than a heading. On a ramp it leans
-  into the slope — *partly*: a ramp is close to edge-on at this camera, so an
-  arrow lying in the plane exactly collapses into an unreadable sliver, the
-  same way the ramp's own surface nearly does. It leans about half as far as
-  the terrain does, which reads as following the slope while staying an arrow.
+  reads as a wedge aimed at the ball rather than a heading. On a ramp it lies in
+  the ramp's plane, at the terrain's own angle — the same plane the ramp's top
+  face is drawn in, not a shallower one chosen to read better. That plane is
+  close to edge-on at this camera, so the arrow is foreshortened hard and is
+  given size back in width and thickness to stay legible; the angle itself is
+  not negotiable, because a marker at a different angle from the ground it
+  sits on is the thing that looked wrong.
   A marker also carries a white keyline, sized off the tile, so it survives
   being drawn over the cup or over raised ground. The only glyphs are
   numerals, the card's move/jump mark, and the restart arrow.

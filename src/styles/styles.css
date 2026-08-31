@@ -265,15 +265,16 @@ main {
    not round numbers. */
 .sl {
   --rmax: var(--lift);
-  /* How far the arrow leans into the slope, as a fraction of the iso
-     half-step. True to the terrain would be 0.6 --- one level of rise
-     (--lift, 0.3w) over one tile of travel (w/2). It is deliberately less.
-     A ramp climbs 0.3w across a tile that only drops 0.25w on screen, so its
-     surface is very close to edge-on: at 0.6 the arrow lies in the plane
-     exactly and collapses into an unreadable sliver, the same way the ramp's
-     own surface does. 0.3 reads as leaning up the slope while staying an
-     arrow, which is the job it has. */
-  --tilt: 0.3;
+  /* The slope, as a fraction of the iso half-step: one level of rise
+     (--lift, 0.3w) over one tile of travel (w/2). The arrow lies in the
+     ramp's plane exactly, the same plane the ramp's own top face is drawn in.
+
+     A ramp climbs 0.3w across a tile that only drops 0.25w on screen, so that
+     plane is close to edge-on and anything lying in it is foreshortened hard
+     --- the ramp's top face renders as a narrow band for the same reason. The
+     arrow is given size back in width and thickness to stay legible under it;
+     what it is not given is a shallower angle. */
+  --tilt: 0.6;
 }
 
 .sl-se { --re: var(--lift); --rs: var(--lift); }
@@ -287,16 +288,17 @@ main {
    that same tile of travel also changes height, so the vertical half of one
    basis vector shifts by --tilt. Which basis vector moves depends on whether
    the ramp climbs along c or along r, and the sign on whether it climbs with
-   the axis or against it. See --tilt for why it is not the true angle. */
+   the axis or against it. */
 .sl-se .pl.ar { transform: matrix(1, calc(0.5 - var(--tilt)), -1, 0.5, 0, 0) rotate(var(--rot)); }
 .sl-nw .pl.ar { transform: matrix(1, calc(0.5 + var(--tilt)), -1, 0.5, 0, 0) rotate(var(--rot)); }
 .sl-sw .pl.ar { transform: matrix(1, 0.5, -1, calc(0.5 - var(--tilt)), 0, 0) rotate(var(--rot)); }
 .sl-ne .pl.ar { transform: matrix(1, 0.5, -1, calc(0.5 + var(--tilt)), 0, 0) rotate(var(--rot)); }
 
-/* Slightly wider and thicker on a slope, to survive the foreshortening. */
+/* Wider and much thicker on a slope: the plane it lies in is close to
+   edge-on, so a flat-ground arrow drawn in it would come out a sliver. */
 .sl .tri {
-  width: calc(var(--w) * 0.46);
-  height: calc(var(--w) * 0.3);
+  width: calc(var(--w) * 0.52);
+  height: calc(var(--w) * 0.34);
 }
 
 /* Anything standing on a ramp stands halfway up it, not at its foot --- the
