@@ -238,6 +238,35 @@ function level10(): Level {
   };
 }
 
+/** L11: sand or jump --- the ball only gets one of the two ways across, and
+ *  which one depends on whether the roll already met the sand.
+ *
+ *  Jumped first, the ball only reaches the sand tile, not past it --- and
+ *  every card left over then rolls it straight off the far edge into the gap
+ *  that runs the board's whole width, no row spared. Rolled first, the same
+ *  sand stops it one tile early, and *that* is exactly where the arc card
+ *  needs to launch from to clear the gap no roll across any row could. */
+function level11(): Level {
+  const grid = field(5, 6);
+  grid[0][0] = null;
+  grid[0][5] = null;
+  grid[4][0] = null;
+  grid[4][5] = null;
+  grid[2][2] = SAND();
+  for (let r = 0; r < 5; r++) grid[r][4] = null;
+  grid[2][5] = HOLE();
+  return {
+    id: 11,
+    grid,
+    ball: { r: 2, c: 0 },
+    hand: [
+      { kind: "move", value: 3 },
+      { kind: "move", value: 1 },
+      { kind: "jump", value: 2 },
+    ],
+  };
+}
+
 /** The curve: move, then distance, then four directions with a wrong one among
  *  them, then a step that blocks, a step that doesn't, the ramp between them,
  *  then the card that ignores all of it, and last a level that wants two of
@@ -256,6 +285,7 @@ export const LEVELS: Level[] = [
   level8(),
   level9(),
   level10(),
+  level11(),
 ];
 
 export { field, G, HOLE };
