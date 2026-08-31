@@ -70,6 +70,30 @@ describe("every shipped level", () => {
     expect(solve(LEVELS[0])).not.toBe(null);
   });
 
+  it("numbers itself in the order it is played", () => {
+    expect(LEVELS.map((level) => level.id)).toEqual(LEVELS.map((_, i) => i + 1));
+  });
+
+  it("has a level that cannot be done without a jump", () => {
+    // The design critic's second open finding: a move card being unable to
+    // climb had no on-screen consequence a stranger could see. A level a jump
+    // solves, and the same card as a move cannot, is that consequence.
+    const withJumps = LEVELS.filter((level) => level.hand.some((c) => c.kind === "jump"));
+    expect(withJumps.length).toBeGreaterThan(0);
+
+    for (const level of withJumps) {
+      const grounded = {
+        ...level,
+        hand: level.hand.map((card) => ({ ...card, kind: "move" as const })),
+      };
+      expect(solve(level)).not.toBe(null);
+      expect(
+        solve(grounded),
+        `level ${level.id} solves just as well with the jumps turned into moves`,
+      ).toBe(null);
+    }
+  });
+
   it("puts the hole somewhere real on every level", () => {
     for (const level of LEVELS) {
       const hole = holeOf(level);

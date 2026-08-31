@@ -128,8 +128,12 @@ main {
   --h: calc(var(--w) / 2);
   --hh: calc(var(--w) / 4);
   --d: calc(var(--w) * 0.13);
+  /* --head is the headroom the tallest ground on the level needs above the
+     flat board. Every tile is pushed down by it and the box grows by it, so
+     the board's box contains its own ink and centres on what you can see. */
+  --head: calc(var(--peak, 0) * var(--lift));
   width: calc(var(--w) * (var(--cols) + var(--rows)) / 2);
-  height: calc(var(--hh) * (var(--cols) + var(--rows) - 2) + var(--h) + var(--d));
+  height: calc(var(--hh) * (var(--cols) + var(--rows) - 2) + var(--h) + var(--d) + var(--head));
   filter: drop-shadow(0 18px 26px rgba(70, 90, 66, 0.2));
   transition: opacity 0.3s;
 }
@@ -150,7 +154,9 @@ main {
   --rw: 0px;
   --rmax: 0px;
   left: calc((var(--c) - var(--r)) * var(--hw) + var(--hw) * (var(--rows) - 1));
-  top: calc((var(--c) + var(--r)) * var(--hh) - (var(--dd) - var(--d)) - var(--rmax));
+  top: calc(
+    (var(--c) + var(--r)) * var(--hh) - (var(--dd) - var(--d)) - var(--rmax) + var(--head)
+  );
   width: var(--w);
   height: calc(var(--h) + var(--dd) + var(--rmax));
   --yN: calc(var(--rmax) - var(--rn));

@@ -6,6 +6,7 @@ import type { Grid, Level, Tile } from "./types";
 
 const G = (height = 0): Tile => ({ terrain: "ground", height });
 const HOLE = (height = 0): Tile => ({ terrain: "hole", height });
+const SAND = (height = 0): Tile => ({ terrain: "sand", height });
 
 /** A rectangle of flat ground to overwrite. */
 function field(rows: number, cols: number, height = 0): Grid {
@@ -82,12 +83,12 @@ function level4(): Level {
   };
 }
 
-/** L5: the ramp, and the run-up it needs. The hole is on the high ground and a
+/** L6: the ramp, and the run-up it needs. The hole is on the high ground and a
  *  ramp is the way up --- but a card that would leave the ball standing on the
  *  ramp doesn't set off up it at all. Play the 3 first and it stops at the
  *  ramp's foot with only a 1 left, which cannot clear it: the level is lost,
  *  and the rule has taught itself. */
-function level5(): Level {
+function level6(): Level {
   const grid = field(3, 5);
   for (let r = 0; r < 3; r++) {
     grid[r][3] = { terrain: "ground", height: 0, ramp: "se" };
@@ -95,7 +96,7 @@ function level5(): Level {
   }
   grid[1][4] = { terrain: "hole", height: 1 };
   return {
-    id: 5,
+    id: 6,
     grid,
     ball: { r: 1, c: 0 },
     hand: [
@@ -105,6 +106,96 @@ function level5(): Level {
   };
 }
 
-export const LEVELS: Level[] = [level1(), level2(), level3(), level4(), level5()];
+/** L5: the other half of height. A step up stops the ball dead; a step down
+ *  doesn't, and costs nothing to take --- the ball rolls off the plateau and
+ *  keeps whatever movement it had left. Once it is down it cannot get back up,
+ *  which the missing arrow says without a word. */
+function level5(): Level {
+  const grid = field(3, 4);
+  for (let r = 0; r < 3; r++) {
+    grid[r][0] = G(1);
+    grid[r][1] = G(1);
+  }
+  grid[1][3] = HOLE();
+  return {
+    id: 5,
+    grid,
+    ball: { r: 1, c: 0 },
+    hand: [
+      { kind: "move", value: 2 },
+      { kind: "move", value: 1 },
+    ],
+  };
+}
+
+/** L7: what `jump` is for, and the level that answers the design critic's
+ *  second open finding --- that a move card being unable to climb had no
+ *  on-screen consequence a stranger could see.
+ *
+ *  Here it has one. The hole sits on high ground no ramp serves, and the hand
+ *  is arranged so the ball arrives at the foot of that step with **both** a
+ *  move card and the jump still in hand. Arm the move and there is no arrow
+ *  toward the hole; arm the jump and there is. The two cards differ visibly,
+ *  on the same tile, at the moment it matters --- which a sequence that spends
+ *  the move first would never show.
+ *
+ *  The high ground is on the far side from the ball for the same reason as L4:
+ *  a raised slab covers what is behind it. */
+function level7(): Level {
+  const grid = field(3, 4);
+  for (let r = 0; r < 3; r++) grid[r][0] = G(1);
+  grid[1][0] = { terrain: "hole", height: 1 };
+  return {
+    id: 7,
+    grid,
+    ball: { r: 1, c: 3 },
+    hand: [
+      { kind: "move", value: 2 },
+      { kind: "move", value: 1 },
+      { kind: "jump", value: 1 },
+    ],
+  };
+}
+
+/** L8: sand, and the first level that asks for two ideas at once. Sand stops
+ *  the ball dead the moment it touches it and throws away whatever movement
+ *  was left, so a band two tiles wide costs a card per tile to wade through
+ *  --- more cards than the hand has. It has to be jumped, which is checked
+ *  rather than hoped for: turn this level's jump into a move of the same value
+ *  and a search finds no solution at all. */
+function level8(): Level {
+  const grid = field(3, 6);
+  for (let r = 0; r < 3; r++) {
+    grid[r][2] = SAND();
+    grid[r][3] = SAND();
+  }
+  grid[1][5] = HOLE();
+  return {
+    id: 8,
+    grid,
+    ball: { r: 1, c: 0 },
+    hand: [
+      { kind: "move", value: 1 },
+      { kind: "jump", value: 3 },
+      { kind: "move", value: 1 },
+    ],
+  };
+}
+
+/** The curve: move, then distance, then four directions with a wrong one among
+ *  them, then a step that blocks, a step that doesn't, the ramp between them,
+ *  then the card that ignores all of it, and last a level that wants two of
+ *  those ideas together. One new idea per level, and every teaching level is
+ *  also a puzzle that can be lost. */
+export const LEVELS: Level[] = [
+  level1(),
+  level2(),
+  level3(),
+  level4(),
+  level5(),
+  level6(),
+  level7(),
+  level8(),
+];
 
 export { field, G, HOLE };

@@ -49,21 +49,6 @@ skipped run still exits 0 under `gh run watch`, so check the run's conclusion,
 not the exit code). Links check and secrets scan pass, both of which have never
 executed on this repo. A stranger can finish L1 without being told anything.
 
-### T10 — The level set, and a solvability test
-
-Grow to 6–8 levels along the teaching curve: move → distance → a sheer step
-blocks → drop off a ledge → ramp up (and the run-up it needs) → jump →
-combinations. Teaching levels must double as real puzzles.
-
-**Done when:** every shipped level is solvable, proven by a test.
-
-**Acceptance:** a search over card orderings and directions finds a solution for
-every level — this is the cheapest possible defence of the difficulty curve, and
-the curve is the top risk in `PLAN.md`. L1 is solvable in one move.
-**`move` versus `jump` must be visible in a played level** — the critic's second
-open finding: the rule that a move card cannot climb currently has no on-screen
-consequence a stranger can see.
-
 ### T11 — Ending screen and the run score
 
 **Carried from T5:** `finished` currently falls through to the lost screen's
@@ -139,9 +124,11 @@ be done early — it needs the finished game.
   is half-covered by the thing that stopped it. L4 works around it by having
   the ball approach from the front. If a later level can't, the ball needs a
   treatment of its own rather than the level being bent around it.
-- **Composition differs between the two viewports.** Now visible in the real
-  game, not just the slice: desktop leaves a large dead field around a small
-  board, and on the phone the board sits high with the field empty below it.
+- **Composition differs between the two viewports.** Desktop leaves a large
+  dead field around a small board, and on the phone the board sits high with
+  the field empty below it. (The related centring bug is fixed: the board's
+  box now includes the headroom raised ground needs, so it centres on its own
+  ink rather than on the flat rectangle underneath it.)
   This is the design critic's third open finding in `PLAN.md`, and it needs
   different treatments per viewport rather than one shared cap.
 - **L1 teaches the numeral only in one direction.** The ball starts at the
@@ -156,6 +143,12 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T10 — The level set, and a solvability test** — eight levels, one new idea
+  each: move, distance, four directions with a wrong one among them, a step
+  that blocks, a step that doesn't, the ramp between them, the card that
+  ignores all of it, and sand. Every level is proven solvable and losable by
+  search, L1 in one card, and the jump levels are proven to *need* the jump.
+  Played through end to end in the browser, L1 to the finish.
 - **T9 — Resolver: `jump`** — lands exactly N away over whatever lies between,
   ignoring height at both ends; not offered when there is nowhere to arrive,
   and it rolls to the foot if it lands on a slope, so "never rests on a ramp"

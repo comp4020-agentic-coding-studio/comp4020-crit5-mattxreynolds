@@ -10,6 +10,7 @@ import {
   samePos,
   step,
   tileAt,
+  topHeight,
 } from "./types";
 
 /** State to HTML. The only file that knows a tile is three clip-path faces.
@@ -55,8 +56,17 @@ function boardHTML(level: Level, run: Run, marks: Array<{ dir: Dir; move: unknow
 
   // --fx and --fy are the reciprocals styles.css multiplies by; see the note
   // there. Reciprocals so calc() only ever has to multiply by a number.
+  // Raised ground is drawn *above* the flat board's box, so the box has to
+  // make room for the tallest thing on the level or it centres by the wrong
+  // rectangle and the back row rides up under the gutter bar. A ramp counts as
+  // its high edge.
+  const peak = Math.max(
+    0,
+    ...level.grid.flatMap((row) => row.flatMap((tile) => (tile ? [topHeight(tile)] : []))),
+  );
+
   const fx = 2 / (cols + rows);
-  const fy = 1 / ((cols + rows - 2) / 4 + 0.8);
+  const fy = 1 / ((cols + rows - 2) / 4 + 0.8 + peak * 0.3);
 
   // Markers sit on the tile *next to* the ball, not on the tile it would land
   // on. They read as a direction chooser --- four arrows around the ball ---
@@ -78,7 +88,7 @@ function boardHTML(level: Level, run: Run, marks: Array<{ dir: Dir; move: unknow
   // saturated thing left. A finished run is not that, and gets its own
   // treatment in T11.
   const dim = run.phase === "lost" ? " dim" : "";
-  const shape = `--cols:${cols};--rows:${rows};--fx:${fx.toFixed(5)};--fy:${fy.toFixed(5)}`;
+  const shape = `--cols:${cols};--rows:${rows};--peak:${peak};--fx:${fx.toFixed(5)};--fy:${fy.toFixed(5)}`;
   return `<div class="board${dim}" style="${shape}">${tiles}</div>`;
 }
 
@@ -121,7 +131,9 @@ function tileHTML(
  *  and the slab's own depth face is what reads. */
 function terrainClasses(tile: Tile): string {
   const ground = tile.height === 0 ? "gr" : tile.height === 1 ? "up" : "up2";
-  const classes = [tile.terrain === "sand" ? "sd" : ground];
+  // Sand keeps the ground class as well as its own: `sd` repaints the surface,
+  // and the class underneath is what carries the height.
+  const classes = tile.terrain === "sand" ? [ground, "sd"] : [ground];
   if (isRamp(tile)) classes.push("sl", `sl-${tile.ramp}`);
   return classes.join(" ");
 }
