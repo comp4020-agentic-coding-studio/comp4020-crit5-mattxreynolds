@@ -58,14 +58,18 @@ describe("jump", () => {
     expect(roll(level).outcome).toBe("holed");
   });
 
-  it("is not offered when it would land off the board", () => {
+  it("is offered and falls when it would land off the board", () => {
     const level = board([G(), G()], 0, jump(3));
-    expect(offers(level, level.ball, level.hand[0])).toEqual([]);
+    const result = roll(level);
+    expect(result.outcome).toBe("fell");
+    expect(result.path).toEqual([level.ball, { r: 0, c: 3 }]);
+    expect(offers(level, level.ball, level.hand[0]).map((o) => o.dir)).toContain("se");
   });
 
-  it("is not offered when it would land in a gap", () => {
+  it("is offered and falls when it would land in a gap", () => {
     const level = board([G(), G(), null], 0, jump(2));
-    expect(offers(level, level.ball, level.hand[0]).map((o) => o.dir)).toEqual([]);
+    expect(roll(level).outcome).toBe("fell");
+    expect(offers(level, level.ball, level.hand[0]).map((o) => o.dir)).toContain("se");
   });
 
   it("never comes to rest on a ramp either --- it lands and rolls to the foot", () => {
@@ -78,6 +82,11 @@ describe("jump", () => {
     ];
     const level = board(tiles, 0, jump(1));
     const result = roll(level);
+    expect(result.path).toEqual([
+      { r: 0, c: 0 },
+      { r: 0, c: 1 },
+      { r: 0, c: 2 },
+    ]);
     expect(isRamp(tileAt(level, result.landing)!)).toBe(false);
     expect(result.landing).toEqual({ r: 0, c: 2 });
   });

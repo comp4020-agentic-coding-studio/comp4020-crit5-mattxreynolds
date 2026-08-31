@@ -88,6 +88,9 @@ export interface Move {
   path: Pos[];
   landing: Pos;
   outcome: Outcome;
+  /** The card still had distance left, but the next edge could not be
+   *  crossed. The browser uses this to show the impact after the roll. */
+  blocked?: boolean;
 }
 
 export function tileAt(level: Level, p: Pos): Tile | null {

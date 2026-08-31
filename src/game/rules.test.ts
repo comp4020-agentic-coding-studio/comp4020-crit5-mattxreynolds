@@ -125,11 +125,23 @@ describe("height", () => {
     const result = play(level, "se");
     expect(result.landing).toEqual({ r: 0, c: 1 });
     expect(result.outcome).toBe("stopped");
+    expect(result.blocked).toBe(true);
   });
 
   it("is blocked by a step up of any size", () => {
     const level = slope([0, 4], 0, 3);
     expect(play(level, "se").landing).toEqual({ r: 0, c: 0 });
+  });
+
+  it("reports an early wall after travelling, so the browser can show the impact", () => {
+    const level = slope([0, 0, 0, 1], 0, 5);
+    const result = play(level, "se");
+    expect(result.path).toEqual([
+      { r: 0, c: 0 },
+      { r: 0, c: 1 },
+      { r: 0, c: 2 },
+    ]);
+    expect(result.blocked).toBe(true);
   });
 
   it("drops off a ledge and keeps the steps it has left", () => {

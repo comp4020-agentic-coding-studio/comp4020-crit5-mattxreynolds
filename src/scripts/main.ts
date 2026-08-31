@@ -95,6 +95,7 @@ function start(root: HTMLElement): void {
       return;
     }
     const settled = await roll(move.path, level.hand[index].kind === "jump");
+    if (move.blocked) await bump(dir, settled);
     if (move.outcome === "holed") {
       await sink(settled);
       await wait(HOLED_PAUSE_MS);
@@ -168,10 +169,19 @@ function start(root: HTMLElement): void {
      *  parabola sampled often enough to read as a curve, scaled to how far the
      *  throw is --- and the shadow stays on the ground and shrinks, which is
      *  what actually says the ball is in the air rather than sliding. */
-    const end = offsets[offsets.length - 1];
-    const tiles = Math.max(1, Math.abs(path[path.length - 1].c - path[0].c) + Math.abs(path[path.length - 1].r - path[0].r));
+    // A slope landing adds a downhill tail to the engine path. Only the first
+    // leg is airborne: arc onto path[1], then visibly roll through the rest.
+    const end = offsets[1];
+    const tiles = Math.max(
+      1,
+      Math.abs(path[1].c - path[0].c) + Math.abs(path[1].r - path[0].r),
+    );
     const hop = w * (0.34 + 0.1 * tiles);
     const SAMPLES = 16;
+    const jumpDuration = Math.max(340, STEP_MS * tiles);
+    const tailDuration = STEP_MS * Math.max(0, path.length - 2);
+    const totalDuration = jumpDuration + tailDuration;
+    const jumpShare = jumpDuration / totalDuration;
 
     const thrown = (base: string, ground: boolean): Keyframe[] =>
       Array.from({ length: SAMPLES + 1 }, (_, i) => {
@@ -183,12 +193,31 @@ function start(root: HTMLElement): void {
         return { transform: `translate(${dx}px, ${dy}px) ${base} ${scale}`, easing: "linear" };
       });
 
+    const jumpedThenRolled = (base: string, ground = false): Keyframe[] => {
+      const jump = thrown(base, ground).map((frame, i) => ({
+        ...frame,
+        offset: (i / SAMPLES) * jumpShare,
+      }));
+      if (path.length === 2) return jump;
+
+      const ontoTail = jump[jump.length - 1];
+      const firstDrop = heights[2] - heights[1];
+      ontoTail.easing = firstDrop > 0 ? "ease-out" : firstDrop < 0 ? "ease-in" : "linear";
+
+      const tail = offsets.slice(2).map(({ dx, dy }, i) => ({
+        transform: `translate(${dx}px, ${dy}px) ${base}`,
+        offset: jumpShare + ((i + 1) / (path.length - 2)) * (1 - jumpShare),
+        easing: "linear",
+      }));
+      return [...jump, ...tail];
+    };
+
     const frames = arcs
-      ? (base: string, ground = false): Keyframe[] => thrown(base, ground)
+      ? (base: string, ground = false): Keyframe[] => jumpedThenRolled(base, ground)
       : (base: string): Keyframe[] => rolled(base);
 
     const timing: KeyframeAnimationOptions = {
-      duration: arcs ? Math.max(340, STEP_MS * tiles) : STEP_MS * (path.length - 1),
+      duration: arcs ? totalDuration : STEP_MS * (path.length - 1),
       fill: "forwards",
     };
 
@@ -223,6 +252,32 @@ function start(root: HTMLElement): void {
     const leaning = [ball.animate(lean(BALL_BASE), timing)];
     if (shadow) leaning.push(shadow.animate(lean(SHADOW_BASE), timing));
     await Promise.all(leaning.map((a) => a.finished.catch(() => undefined)));
+  }
+
+  /** Finish an interrupted roll with a small impact. Unlike nudge(), the ball
+   *  has already been lifted onto the board and travelled some distance, so
+   *  this starts at the settled offset and rebounds there. */
+  async function bump(dir: Dir, settled: Settled | null): Promise<void> {
+    const ball = root.querySelector<HTMLElement>(".ball");
+    const shadow = root.querySelector<HTMLElement>(".shdw");
+    if (!ball || !settled) return;
+
+    const { dx, dy, w } = settled;
+    const { dr, dc } = STEP[dir];
+    const bx = (dc - dr) * (w / 2) * 0.13;
+    const by = (dc + dr) * (w / 4) * 0.13;
+    const at = (base: string, x = 0, y = 0, shape = ""): string =>
+      `translate(${dx + x}px, ${dy + y}px) ${base} ${shape}`;
+    const frames = (base: string): Keyframe[] => [
+      { transform: at(base), offset: 0 },
+      { transform: at(base, bx, by, "scale(0.9, 1.08)"), offset: 0.38 },
+      { transform: at(base, -bx * 0.28, -by * 0.28), offset: 0.68 },
+      { transform: at(base), offset: 1 },
+    ];
+    const timing: KeyframeAnimationOptions = { duration: 260, easing: "ease-out", fill: "forwards" };
+    const bounced = [ball.animate(frames(BALL_BASE), timing)];
+    if (shadow) bounced.push(shadow.animate(frames(SHADOW_BASE), timing));
+    await Promise.all(bounced.map((a) => a.finished.catch(() => undefined)));
   }
 
   /** Re-parent an element onto the board, keeping it exactly where it looks

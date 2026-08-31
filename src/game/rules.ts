@@ -47,7 +47,9 @@ function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
       path.push(next);
       return { path, landing: next, outcome: "fell" };
     }
-    if (!canEnter(here, tile, dir)) break;
+    if (!canEnter(here, tile, dir)) {
+      return { ...settle(level, path, dir), blocked: true };
+    }
 
     at = next;
     path.push(at);
@@ -67,14 +69,14 @@ function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
  *  end. Ramps are the ordinary way up; this is how the ball reaches ground no
  *  ramp serves, and how it clears what a roll would stop at.
  *
- *  There is nowhere to arrive if the landing tile isn't there, so the move
- *  simply doesn't happen and the direction isn't offered. */
+ *  If the landing tile isn't there the throw still happens: empty space is an
+ *  edge just as it is for a roll, so the ball falls and the level is lost. */
 function resolveJump(level: Level, from: Pos, value: number, dir: Dir): Move {
   let landing = from;
   for (let n = 0; n < value; n++) landing = step(landing, dir);
 
   const tile = tileAt(level, landing);
-  if (!tile) return { path: [from], landing: from, outcome: "stopped" };
+  if (!tile) return { path: [from, landing], landing, outcome: "fell" };
 
   // Only the two ends: nothing happens in between, and the animation should
   // carry the ball over rather than through.
