@@ -76,11 +76,13 @@ describe("direction markers", () => {
 
   it("leaves the engine to know which of them actually move the ball", () => {
     // The renderer shows four; `offers` is still the engine's own account of
-    // which are real moves, and the level tests search over that.
+    // which are real moves, and the level tests search over that. On L1, all
+    // four now are: north-west runs straight off this board, which used to be
+    // silently refused but is a fall now --- a real, visible move.
     const level = LEVELS[0];
     const real = offers(level, level.ball, level.hand[0]).map((o) => o.dir);
-    expect(real).not.toContain("nw");
-    expect(real.length).toBe(3);
+    expect(real).toContain("nw");
+    expect(real.length).toBe(4);
   });
 
   it("gives every arrow a hit target that is a real button", () => {

@@ -27,8 +27,9 @@ export function resolve(level: Level, from: Pos, card: Card, dir: Dir): Move {
 }
 
 /** A `move` card of value N takes up to N steps in one direction, and stops
- *  early for a reason: the board runs out, the ball goes in, sand takes it, or
- *  a step up blocks it. */
+ *  early for a reason: the ball goes in, sand takes it, a step up blocks it,
+ *  or --- the edge is not a wall --- there is no tile at all to land on, and
+ *  the ball goes with it. */
 function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
   const path: Pos[] = [from];
   let at = from;
@@ -37,10 +38,15 @@ function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
     const here = tileAt(level, at);
     const next = step(at, dir);
     const tile = tileAt(level, next);
+    if (!here) break;
 
-    // Off the board, or over a gap in it: the ball stops where it is. The
-    // card is still spent --- a wasted card is a real wrong move.
-    if (!tile || !here) break;
+    // Off the board, or over a gap in it: there is nothing there to stand on,
+    // so the ball falls. The card is still spent --- a wasted card is a real
+    // wrong move, and this is the worst one.
+    if (!tile) {
+      path.push(next);
+      return { path, landing: next, outcome: "fell" };
+    }
     if (!canEnter(here, tile, dir)) break;
 
     at = next;
@@ -102,7 +108,14 @@ function settle(level: Level, path: Pos[], dir: Dir): Move {
     for (;;) {
       const next = step(at, dir);
       const onto = tileAt(level, next);
-      if (!onto || !canEnter(tile, onto, dir)) break;
+
+      // A ramp running off the edge of the board is still an edge --- the
+      // ball falls rather than stopping at the ramp's foot.
+      if (!onto) {
+        path.push(next);
+        return { path, landing: next, outcome: "fell" };
+      }
+      if (!canEnter(tile, onto, dir)) break;
 
       at = next;
       path.push(at);

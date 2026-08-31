@@ -79,7 +79,7 @@ export interface Level {
   hand: Card[];
 }
 
-export type Outcome = "stopped" | "holed";
+export type Outcome = "stopped" | "holed" | "fell";
 
 /** What `resolve` returns: every tile stepped through, where the ball came to
  *  rest, and whether the level was won. The whole path, not just the landing,

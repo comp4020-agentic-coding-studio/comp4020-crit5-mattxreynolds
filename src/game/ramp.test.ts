@@ -108,11 +108,16 @@ describe("a ball never comes to rest on a ramp", () => {
     expect(dirs).toContain("se");
   });
 
-  it("still refuses a direction where nothing moves at all", () => {
-    // A sheer step is not a slope: there is no roll to show, so the arrow
-    // stays off. Same for a direction straight off the board.
+  it("still refuses a sheer step, even though every other direction now falls", () => {
+    // A sheer step is not a slope: there is no roll to show, so that arrow
+    // stays off. The other three run straight off this single-tile-wide lane
+    // --- which is a fall now, and a fall is a real, offered move.
     const level = board("01", 0, move(2));
-    expect(offers(level, level.ball, level.hand[0]).map((o) => o.dir)).toEqual([]);
+    expect(offers(level, level.ball, level.hand[0]).map((o) => o.dir)).toEqual([
+      "ne",
+      "sw",
+      "nw",
+    ]);
   });
 
   it("going down: rolls on to the bottom when the steps run out mid-ramp", () => {

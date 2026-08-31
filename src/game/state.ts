@@ -70,6 +70,9 @@ export function playCard(run: Run, card: number, move: Move): Run {
     return next < run.levels.length ? enter(after, next) : { ...after, phase: "finished" };
   }
 
+  // A fall ends the level on the spot, whatever is left in the hand.
+  if (move.outcome === "fell") return { ...after, phase: "lost" };
+
   return spent.every(Boolean) ? { ...after, phase: "lost" } : after;
 }
 

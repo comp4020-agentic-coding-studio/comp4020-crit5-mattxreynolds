@@ -89,8 +89,12 @@ describe("move on flat ground", () => {
 describe("a direction that moves nothing", () => {
   it("reports the start tile as the landing, so the caller can decline to offer it", () => {
     // PLAN.md: a direction whose resolved landing equals the start is not
-    // shown. A stranger tapping an arrow and seeing nothing reads it as broken.
-    const level = board(1, 3, { r: 0, c: 2 }, { r: 0, c: 0 }, [move(2)]);
+    // shown. A stranger tapping an arrow and seeing nothing reads it as
+    // broken. Running off the board no longer qualifies --- that is a fall,
+    // and a fall is visible movement --- so this uses a sheer step instead,
+    // which still blocks before the ball ever sets off.
+    const level = board(1, 3, { r: 0, c: 2 }, { r: 0, c: 1 }, [move(2)]);
+    level.grid[0][0] = { terrain: "ground", height: 3 };
     const result = play(level, "nw");
     expect(result.landing).toEqual(level.ball);
     expect(result.path).toEqual([level.ball]);
@@ -160,11 +164,12 @@ describe("height", () => {
     expect(play(level, "se").outcome).toBe("holed");
   });
 
-  it("does not offer a direction blocked by a climb", () => {
-    // Nothing happens when you tap it, so it is not shown --- the same rule
-    // that hides a direction running straight off the board.
+  it("does not offer a direction blocked by a climb, though a fall still is", () => {
+    // Nothing happens when you tap the climb, so it is not shown. The other
+    // two directions run straight off this single-row lane, which is a fall
+    // now --- visible movement, so those are offered same as "nw".
     const level = slope([0, 0, 2], 1, 2);
     const dirs = offers(level, level.ball, level.hand[0]).map((o) => o.dir);
-    expect(dirs).toEqual(["nw"]);
+    expect(dirs).toEqual(["ne", "sw", "nw"]);
   });
 });
