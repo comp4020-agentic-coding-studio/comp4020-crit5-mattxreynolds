@@ -49,36 +49,6 @@ skipped run still exits 0 under `gh run watch`, so check the run's conclusion,
 not the exit code). Links check and secrets scan pass, both of which have never
 executed on this repo. A stranger can finish L1 without being told anything.
 
-### T8 — Resolver: ramps and sand
-
-**Carried from T7:** height renders but has never been *seen* in a shipped
-level --- `--lv` lift, the three-step ground ramp (`gr` / `up` / `up2`) and the
-climb rule all need one screenshot of a real level before they are trusted. The
-slice proved the CSS; the renderer emitting it is what hasn't been checked.
-Sand at height also loses its height colour, since `sd` replaces the ground
-class rather than layering on it --- decide whether that matters when sand
-first ships.
-
-**Carried from T1's port:** the four `.sl-*` gradient rules in `styles.css`
-put the *light* end at the ramp's raised edge, which inverts the contract's one
-height convention. Only the `.sl.up` override (the combination the slice
-actually rendered) has it the right way round. Fix all four when ramps first
-render from data, and check it on a screenshot rather than by reading the CSS.
-
-**This task carries the spec's one focused automated test.** A ball never comes
-to rest on a ramp: too few steps to clear one going up and it stops at the foot
-(card still spent, so a failed climb is a real wrong move); steps running out
-going down and it rolls on to the bottom at no extra cost. Sand stops the ball
-dead on entry and discards remaining steps.
-
-**Done when:** unit tests cover going up with enough steps, going up with too
-few, going down with steps to spare, going down with steps running out
-mid-ramp, a multi-tile ramp, and sand discarding remaining movement.
-
-**Acceptance:** the focused test is named and self-contained, and asserts both
-halves of the rule. Assert as an invariant over every shipped level that no
-resolved landing tile is ever a ramp — not just over the hand-written cases.
-
 ### T9 — Resolver: `jump` *(first thing to cut if the schedule slips)*
 
 Lands exactly N away, ignores everything between, ignores height in both
@@ -173,6 +143,11 @@ be done early — it needs the finished game.
   marker readable over the cup had to move to the unclipped parent. Found by
   screenshotting, after the outline appeared correctly in computed styles and
   not at all on the page.
+- **A raised tile hides what is behind it.** Correct isometric occlusion ---
+  painting order is r+c --- but it means a ball resting *behind* a raised slab
+  is half-covered by the thing that stopped it. L4 works around it by having
+  the ball approach from the front. If a later level can't, the ball needs a
+  treatment of its own rather than the level being bent around it.
 - **Composition differs between the two viewports.** Now visible in the real
   game, not just the slice: desktop leaves a large dead field around a small
   board, and on the phone the board sits high with the field empty below it.
@@ -190,6 +165,11 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T8 — Resolver: ramps and sand** — carries the spec's focused test, *a ball
+  never comes to rest on a ramp*, both halves plus a property assertion over
+  every shipped level. Ramps and height now render from data (L4 the sheer
+  step, L5 the ramp), and the failed climb is visible in play: with too small a
+  card left, the direction simply stops being offered.
 - **T7 — Resolver: height** — the climb rule stops the ball at the tile before
   a step up, of any size; a drop keeps the steps it has left, so a staircase is
   one-way. A blocked direction isn't offered.

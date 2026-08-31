@@ -128,7 +128,6 @@ main {
   --h: calc(var(--w) / 2);
   --hh: calc(var(--w) / 4);
   --d: calc(var(--w) * 0.13);
-  --rise: calc(var(--w) * 0.17);
   width: calc(var(--w) * (var(--cols) + var(--rows)) / 2);
   height: calc(var(--hh) * (var(--cols) + var(--rows) - 2) + var(--h) + var(--d));
   filter: drop-shadow(0 18px 26px rgba(70, 90, 66, 0.2));
@@ -226,17 +225,20 @@ main {
 }
 
 /* ONE height convention everywhere: higher ground is darker. */
+.gr { --surface: #b6ccab; --surface-up: #8ba580; }
 .gr .top { background: #a3bb98; }
 .gr .top::after { background: #b6ccab; }
 .gr .fl { background: #94ac8a; }
 .gr .fr { background: #84997a; }
 
+.up { --surface: #8ba580; --surface-up: #6b8560; }
 .up .top { background: #7b9670; }
 .up .top::after { background: #8ba580; }
 .up .fl { background: #6e8664; }
 .up .fr { background: #5e7556; }
 
 /* the third step of the same ramp, for ground two or more levels up */
+.up2 { --surface: #6b8560; --surface-up: #516247; }
 .up2 .top { background: #5c7452; }
 .up2 .top::after { background: #6b8560; }
 .up2 .fl { background: #516247; }
@@ -250,23 +252,30 @@ main {
 .sd .fl { background: #cbb98b; }
 .sd .fr { background: #b9a67b; }
 
-/* ramps: one raised edge, the gradient reading as the tilted plane */
-.sl { --rmax: var(--rise); }
-.sl .top { background: #9db492; }
-.sl .fl { background: #94ac8a; }
-.sl .fr { background: #84997a; }
-.sl-pc { --rn: var(--rise); --rw: var(--rise); }
-.sl-nc { --re: var(--rise); --rs: var(--rise); }
-.sl-pr { --rn: var(--rise); --re: var(--rise); }
-.sl-nr { --rs: var(--rise); --rw: var(--rise); }
-.sl-pc .top::after { background: linear-gradient(150deg, #c6d8ba 0%, #9cb391 100%); }
-.sl-nc .top::after { background: linear-gradient(330deg, #c6d8ba 0%, #9cb391 100%); }
-.sl-pr .top::after { background: linear-gradient(210deg, #c6d8ba 0%, #9cb391 100%); }
-.sl-nr .top::after { background: linear-gradient(30deg, #c6d8ba 0%, #9cb391 100%); }
-.sl.up .top { background: #7b9670; }
-.sl.up .top::after { background: linear-gradient(330deg, #8ba580 0%, #b6ccab 100%); }
-.sl.up .fl { background: #94ac8a; }
-.sl.up .fr { background: #84997a; }
+/* Ramps. One knob: a ramp rises exactly one level, so it meets the ground
+   above it instead of stopping short of it --- --lift, not a separate smaller
+   --rise. The class names are the direction the ramp *climbs*, matching the
+   engine's Dir, and each raises the two corners on that edge.
+
+   The gradient runs light at the foot to dark at the head, because higher
+   ground is darker everywhere else and a ramp is the one tile that is both.
+   It reads --surface and --surface-up off the ground class, so a ramp from
+   level 1 to level 2 shades between the right two greens without a second set
+   of rules. The angles are the true screen normals of a 2:1 isometric edge,
+   not round numbers. */
+.sl {
+  --rmax: var(--lift);
+}
+
+.sl-se { --re: var(--lift); --rs: var(--lift); }
+.sl-nw { --rn: var(--lift); --rw: var(--lift); }
+.sl-sw { --rw: var(--lift); --rs: var(--lift); }
+.sl-ne { --rn: var(--lift); --re: var(--lift); }
+
+.sl-se .top::after { background: linear-gradient(297deg, var(--surface-up), var(--surface)); }
+.sl-nw .top::after { background: linear-gradient(117deg, var(--surface-up), var(--surface)); }
+.sl-sw .top::after { background: linear-gradient(63deg, var(--surface-up), var(--surface)); }
+.sl-ne .top::after { background: linear-gradient(243deg, var(--surface-up), var(--surface)); }
 
 /* --- things standing on the ground plane -------------------------------- */
 

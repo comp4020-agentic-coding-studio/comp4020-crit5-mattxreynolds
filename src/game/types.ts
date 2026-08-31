@@ -24,6 +24,11 @@ export const STEP: Record<Dir, { dr: number; dc: number; rot: number }> = {
   ne: { dr: -1, dc: 0, rot: 270 },
 };
 
+/** The direction a ball would be travelling if it turned round. */
+export function opposite(d: Dir): Dir {
+  return { se: "nw", nw: "se", sw: "ne", ne: "sw" }[d] as Dir;
+}
+
 export function step(p: Pos, d: Dir): Pos {
   return { r: p.r + STEP[d].dr, c: p.c + STEP[d].dc };
 }
