@@ -72,15 +72,15 @@ describe("direction markers", () => {
     }
   });
 
-  it("gives every offered tile a hit target that is a real button", () => {
-    // Every arrow has a hit target; the hole is offered with a hit target and
-    // no arrow, because the cup and flag already fill that tile.
+  it("gives every offered tile an arrow and a hit target that is a real button", () => {
+    // The hole is offered like any other tile. Marking it with the white ring
+    // alone made L1 look unfinishable: the ring reads as decoration, and only
+    // the arrow reads as "go here".
     for (const tile of doc.querySelectorAll(".t")) {
-      if (tile.querySelector(".ar")) expect(tile.querySelector("button.hit")).toBeTruthy();
+      expect(Boolean(tile.querySelector(".ar"))).toBe(Boolean(tile.querySelector("button.hit")));
     }
-    const hits = doc.querySelectorAll("button.hit");
-    expect(hits.length).toBe(3);
-    expect(doc.querySelectorAll(".ar").length).toBe(2);
+    expect(doc.querySelectorAll("button.hit").length).toBe(3);
+    expect(doc.querySelectorAll(".ar").length).toBe(3);
   });
 
   it("marks the screen armed so the CSS can reveal them", () => {

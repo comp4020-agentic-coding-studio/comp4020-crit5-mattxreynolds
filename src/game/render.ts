@@ -87,12 +87,10 @@ function tileHTML(
     samePos(run.ball, { r, c }) && tile.terrain !== "hole"
       ? `<div class="shdw"></div><div class="ball"></div>`
       : "",
-    // No arrow on the hole: the cup and flag already fill that tile, and an
-    // arrow behind the rim reads as a spur rather than a heading. The white
-    // ring the .armed rule puts on a marked tile is what offers it.
-    dir && tile.terrain !== "hole"
-      ? `<div class="pl ar" style="--rot:${STEP[dir].rot}deg"><i class="tri"></i></div>`
-      : "",
+    // Every offered tile gets an arrow, the hole included. Leaving it off the
+    // hole and relying on the white ring alone made L1 look unfinishable ---
+    // the ring reads as decoration, the arrow reads as "go here".
+    dir ? `<div class="pl ar" style="--rot:${STEP[dir].rot}deg"><i class="tri"></i></div>` : "",
     `</div>`,
     // The hit target is its own diamond rather than the tile's box, which
     // overlaps its neighbours', or the marker's, which is sheared to twice the

@@ -171,6 +171,11 @@ be done early — it needs the finished game.
   design phase and nothing after it. The moment that comes out of T13 —
   playing the finished game — is the one most likely to be worth citing, and
   it doesn't exist yet.
+- **Candidate `PROCESS.md` moment (for the final revisit):** `clip-path`
+  clips an element's own `filter` output, so the white keyline that makes a
+  marker readable over the cup had to move to the unclipped parent. Found by
+  screenshotting, after the outline appeared correctly in computed styles and
+  not at all on the page.
 - **Composition differs between the two viewports.** Now visible in the real
   game, not just the slice: desktop leaves a large dead field around a small
   board, and on the phone the board sits high with the field empty below it.

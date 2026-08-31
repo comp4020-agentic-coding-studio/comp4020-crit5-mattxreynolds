@@ -7,7 +7,18 @@ import type { Dir, Pos } from "../game/types";
 // Wiring: events in, render out. Everything it decides, it asks the engine.
 
 const STEP_MS = 140;
-const HOLED_PAUSE_MS = 320;
+const HOLED_PAUSE_MS = 260;
+
+/** The offsets .ball and .shdw carry in CSS, which every animated transform
+ *  has to keep or the ball jumps as the animation starts. */
+const BALL_BASE = "translate(-50%, -72%)";
+const SHADOW_BASE = "translate(-50%, -30%)";
+
+interface Settled {
+  dx: number;
+  dy: number;
+  w: number;
+}
 
 const mount = document.getElementById("game");
 if (mount) start(mount);
@@ -69,33 +80,37 @@ function start(root: HTMLElement): void {
 
   /** Animate the ball tile by tile along the path it actually took, and report
    *  where it came to rest so a holing ball can carry on into the cup. */
-  async function roll(path: Pos[]): Promise<{ dx: number; dy: number; w: number } | null> {
+  async function roll(path: Pos[]): Promise<Settled | null> {
+    const board = root.querySelector<HTMLElement>(".board");
     const ball = root.querySelector<HTMLElement>(".ball");
     const shadow = root.querySelector<HTMLElement>(".shdw");
     const tile = ball?.closest<HTMLElement>(".t");
-    if (!ball || !tile || path.length < 2) return null;
+    if (!board || !ball || !tile || path.length < 2) return null;
 
     // One tile's width is the board's only size knob, and it is responsive, so
     // it is measured rather than assumed.
     const w = tile.getBoundingClientRect().width;
     if (!w) return null;
+
+    // The ball has to leave its tile before it can travel. Raising the tile's
+    // z-index instead makes the whole slab jump in front of the terrain that
+    // should be occluding it, because a tile is a stacking context and the
+    // ball can't escape it from the inside.
+    lift(board, ball, 0.72, 901);
+    if (shadow) lift(board, shadow, 0.3, 900);
+
     const level = currentLevel(run);
+    const heightAt = (p: Pos): number => level.grid[p.r]?.[p.c]?.height ?? 0;
     const centre = (p: Pos): { x: number; y: number } => ({
       x: (p.c - p.r) * (w / 2),
       y: (p.c + p.r) * (w / 4) - heightAt(p) * (w * 0.3),
     });
-    const heightAt = (p: Pos): number => level.grid[p.r]?.[p.c]?.height ?? 0;
 
     const from = centre(path[0]);
     const offsets = path.map((p) => {
       const at = centre(p);
       return { dx: at.x - from.x, dy: at.y - from.y };
     });
-
-    // Above every tile for the duration: a ball rolling behind the terrain it
-    // is rolling across reads as a rendering fault.
-    const restoreZ = tile.style.zIndex;
-    tile.style.zIndex = "900";
 
     const frames = (base: string): Keyframe[] =>
       offsets.map(({ dx, dy }) => ({ transform: `translate(${dx}px, ${dy}px) ${base}` }));
@@ -105,35 +120,45 @@ function start(root: HTMLElement): void {
       fill: "forwards",
     };
 
-    const animations = [ball.animate(frames("translate(-50%, -72%)"), timing)];
-    if (shadow) animations.push(shadow.animate(frames("translate(-50%, -30%)"), timing));
+    const animations = [ball.animate(frames(BALL_BASE), timing)];
+    if (shadow) animations.push(shadow.animate(frames(SHADOW_BASE), timing));
 
     await Promise.all(animations.map((a) => a.finished.catch(() => undefined)));
-    tile.style.zIndex = restoreZ;
     return { ...offsets[offsets.length - 1], w };
+  }
+
+  /** Re-parent an element onto the board, keeping it exactly where it looks
+   *  like it already is. `anchor` is the fraction of its own height its CSS
+   *  transform pulls it up by. */
+  function lift(board: HTMLElement, el: HTMLElement, anchor: number, z: number): void {
+    const box = el.getBoundingClientRect();
+    const on = board.getBoundingClientRect();
+    el.style.left = `${box.left + box.width / 2 - on.left}px`;
+    el.style.top = `${box.top + anchor * box.height - on.top}px`;
+    el.style.zIndex = String(z);
+    board.appendChild(el);
   }
 
   /** The ball drops in. Without this the roll just stops on the green next to
    *  the flag and nothing says the level was won --- found by playing it, not
    *  by reading it. */
-  async function sink(settled: { dx: number; dy: number; w: number } | null): Promise<void> {
+  async function sink(settled: Settled | null): Promise<void> {
     const ball = root.querySelector<HTMLElement>(".ball");
     const shadow = root.querySelector<HTMLElement>(".shdw");
     if (!ball || !settled) return;
     const { dx, dy, w } = settled;
 
-    // Behind the cup's rim, so it reads as going in rather than over.
-    ball.style.zIndex = "0";
     shadow?.style.setProperty("opacity", "0");
 
-    const at = (extra: string): string => `translate(${dx}px, ${dy}px) translate(-50%, -72%) ${extra}`;
+    const at = (extra: string): string => `translate(${dx}px, ${dy}px) ${BALL_BASE} ${extra}`;
     await ball
       .animate(
         [
-          { transform: at("scale(1)"), offset: 0 },
-          { transform: at(`translateY(${w * 0.14}px) scale(0.55)`), offset: 1 },
+          { transform: at("scale(1)"), opacity: 1, offset: 0 },
+          { transform: at(`translateY(${w * 0.1}px) scale(0.62)`), opacity: 1, offset: 0.55 },
+          { transform: at(`translateY(${w * 0.16}px) scale(0.45)`), opacity: 0, offset: 1 },
         ],
-        { duration: 260, easing: "ease-in", fill: "forwards" },
+        { duration: 300, easing: "ease-in", fill: "forwards" },
       )
       .finished.catch(() => undefined);
   }

@@ -271,6 +271,7 @@ main {
   position: absolute;
   top: 50%;
   left: 50%;
+  z-index: 2;
   display: grid;
   width: var(--w);
   height: var(--w);
@@ -282,6 +283,18 @@ main {
 .pl.ar {
   display: none;
   transform: matrix(1, 0.5, -1, 0.5, 0, 0) rotate(var(--rot));
+  /* The arrow's outline lives here, on the unclipped parent, and NOT on .tri:
+     clip-path clips an element's own filter output, so an outline drawn on the
+     arrow is clipped away by the arrow's own shape. Without it the arrow
+     disappears into the cup on a hole tile --- both are nearly the same value,
+     and the marker on the winning tile is the last thing that can afford to be
+     unreadable. Sized off the tile, because at a 260px tile a 1px halo is
+     nothing. */
+  --edge: calc(var(--w) * 0.009);
+  filter: drop-shadow(var(--edge) 0 0 var(--white))
+    drop-shadow(calc(var(--edge) * -1) 0 0 var(--white))
+    drop-shadow(0 var(--edge) 0 var(--white))
+    drop-shadow(0 calc(var(--edge) * -1) 0 var(--white));
 }
 
 .armed .pl.ar { display: grid; }
@@ -293,12 +306,11 @@ main {
   width: calc(var(--w) * 0.46);
   height: calc(var(--w) * 0.24);
   background: rgba(44, 58, 40, 0.9);
+
   clip-path: polygon(0% 33%, 57% 33%, 57% 0%, 100% 50%, 57% 100%, 57% 67%, 0% 67%);
 }
 
-/* Above the ball and the direction marker both: the ball drops behind the rim
-   when it goes in, and an arrow whose landing tile is the hole should read as
-   running into the cup rather than over it. */
+/* Above the tile's own faces, below the direction marker. */
 .cup {
   position: absolute;
   z-index: 1;
