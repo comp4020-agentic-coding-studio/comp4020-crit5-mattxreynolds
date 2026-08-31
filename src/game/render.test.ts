@@ -84,6 +84,46 @@ describe("direction markers", () => {
   });
 });
 
+describe("the end of a run", () => {
+  const finished = { ...startRun(LEVELS), phase: "finished" as const, restarts: 3 };
+  const doc = dom(screenHTML(finished));
+
+  it("is a different screen from a lost level, not the same one undimmed", () => {
+    // A win and a loss looking alike is the whole reason this state exists.
+    const lost = dom(screenHTML({ ...startRun(LEVELS), phase: "lost" as const }));
+    expect(doc.querySelector(".finish")).toBeTruthy();
+    expect(lost.querySelector(".finish")).toBe(null);
+    expect(doc.querySelector(".board")).toBe(null);
+    expect(lost.querySelector(".board")).toBeTruthy();
+  });
+
+  it("shows the run's restart count, which is the score", () => {
+    expect(doc.querySelector(".score-num")?.textContent).toBe("3");
+  });
+
+  it("shows a clean run as a zero rather than hiding it", () => {
+    const perfect = dom(screenHTML({ ...startRun(LEVELS), phase: "finished" as const }));
+    expect(perfect.querySelector(".score-num")?.textContent).toBe("0");
+  });
+
+  it("keeps one restart, in the gutter, where it has been all along", () => {
+    expect(doc.querySelectorAll(".redo").length).toBe(1);
+    expect(doc.querySelector(".top-bar .redo")).toBeTruthy();
+  });
+
+  it("says all of it in numerals, with no word anywhere", () => {
+    const text = doc.body.textContent?.replace(/\s+/g, "") ?? "";
+    expect(text).toBe("3");
+  });
+
+  it("is not a dialog, and carries nothing the no-tutorial rule would fail", () => {
+    // spec/crit-5.test.ts fails a <dialog>, a role=dialog, and "modal" in any
+    // class or id. Checked here too, at the source, so it fails fast.
+    expect(doc.querySelector("dialog, [role='dialog']")).toBe(null);
+    expect(/modal|how-to/i.test(screenHTML(finished))).toBe(false);
+  });
+});
+
 describe("the two card types", () => {
   // The contract allows three glyphs in the whole game: numerals, the card's
   // move/jump mark, and the restart arrow. A move and a jump have to be
