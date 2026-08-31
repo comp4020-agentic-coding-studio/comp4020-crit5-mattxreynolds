@@ -156,11 +156,10 @@ function level7(): Level {
 /** L8: the chasm, and what `jump` is for.
  *
  *  A missing column instead of a wall. The two cards state their difference
- *  by doing, one after the other: roll first and the ball runs to the brink
- *  and stops, in plain view, because there is no ground to carry it on. Then
- *  the arc card goes over the same gap. Nobody has to notice an arrow that
- *  isn't there --- which is how the old version of this level taught it, and
- *  the reason it didn't.
+ *  by doing: the size-3 roll played straight at the gap sends the ball into
+ *  it and the level is lost, in plain view, because there is no ground to
+ *  carry it on. The size-1 roll first, then the arc card over the same gap,
+ *  is the way across --- the wrong order costs the run a fall, not a stop.
  *
  *  A gap says "not this way" more plainly than a raised slab does, and it has
  *  the side benefit of hiding nothing behind it. */

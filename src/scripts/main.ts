@@ -98,6 +98,8 @@ function start(root: HTMLElement): void {
     if (move.outcome === "holed") {
       await sink(settled);
       await wait(HOLED_PAUSE_MS);
+    } else if (move.outcome === "fell") {
+      await fallAway(settled);
     }
     run = playCard(run, index, move);
     paint();
@@ -255,6 +257,31 @@ function start(root: HTMLElement): void {
           { transform: at(`translateY(${w * 0.16}px) scale(0.45)`), opacity: 0, offset: 1 },
         ],
         { duration: 300, easing: "ease-in", fill: "forwards" },
+      )
+      .finished.catch(() => undefined);
+  }
+
+  /** The ball goes with the edge. It keeps drifting the way it was already
+   *  travelling, drops further than a hole would take it, and fades all the
+   *  way out --- longer and further than sink(), because this is gone, not
+   *  in. */
+  async function fallAway(settled: Settled | null): Promise<void> {
+    const ball = root.querySelector<HTMLElement>(".ball");
+    const shadow = root.querySelector<HTMLElement>(".shdw");
+    if (!ball || !settled) return;
+    const { dx, dy, w } = settled;
+
+    shadow?.style.setProperty("opacity", "0");
+
+    const at = (extra: string): string => `translate(${dx}px, ${dy}px) ${BALL_BASE} ${extra}`;
+    await ball
+      .animate(
+        [
+          { transform: at("scale(1)"), opacity: 1, offset: 0 },
+          { transform: at(`translateY(${w * 0.35}px) scale(0.8)`), opacity: 0.5, offset: 0.6 },
+          { transform: at(`translateY(${w * 0.7}px) scale(0.5)`), opacity: 0, offset: 1 },
+        ],
+        { duration: 480, easing: "ease-in", fill: "forwards" },
       )
       .finished.catch(() => undefined);
   }

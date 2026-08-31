@@ -187,7 +187,9 @@ the original". We do not have it to hand, so they are decided here and the game
 is tuned by playing *ours*. A `move` card of value N in direction d takes up to
 N steps, and at each step, from the current tile to the next:
 
-- next is off the board → stop where you are, card still spent
+- next is off the board, or over a gap in it → there is no tile to land on, so
+  the ball falls off with it and the level is lost on the spot, whatever is
+  left in the hand — the edge is a hazard, not a wall
 - next is **higher**, with no ramp → blocked, stop where you are (the climb
   rule)
 - next is **lower** → the ball drops onto it and **keeps its remaining steps**
