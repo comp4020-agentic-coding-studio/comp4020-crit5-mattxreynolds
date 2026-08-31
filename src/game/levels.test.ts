@@ -13,6 +13,8 @@ function solve(level: Level): string[] | null {
       for (const { dir, move } of offers(level, ball, level.hand[card])) {
         const line = [...taken, `${level.hand[card].kind}${level.hand[card].value} ${dir}`];
         if (move.outcome === "holed") return line;
+        // A fall ends the level on the spot --- nowhere to search on from.
+        if (move.outcome === "fell") continue;
         const rest = unspent.filter((i) => i !== card);
         const found = rest.length > 0 ? search(move.landing, rest, line) : null;
         if (found) return found;
@@ -23,13 +25,16 @@ function solve(level: Level): string[] | null {
   return search(level.ball, level.hand.map((_, i) => i), []);
 }
 
-/** Is there a way to spend the whole hand and not hole out? */
+/** Is there a way to lose --- spend the whole hand without holing, run out of
+ *  offers, or fall --- rather than win? */
 function losable(level: Level): boolean {
   const search = (ball: Pos, unspent: number[]): boolean => {
     if (unspent.length === 0) return true;
     for (const card of unspent) {
       for (const { move } of offers(level, ball, level.hand[card])) {
         if (move.outcome === "holed") continue;
+        // A fall is itself a way to lose, whatever is left in the hand.
+        if (move.outcome === "fell") return true;
         if (search(move.landing, unspent.filter((i) => i !== card))) return true;
       }
     }

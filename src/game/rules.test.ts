@@ -48,17 +48,19 @@ describe("move on flat ground", () => {
     expect(play(level, "ne").landing).toEqual({ r: 0, c: 1 });
   });
 
-  it("stops at the board edge rather than running off it", () => {
+  it("falls off the board edge rather than stopping at it", () => {
     const level = board(1, 3, { r: 0, c: 0 }, { r: 0, c: 1 }, [move(5)]);
     const result = play(level, "se");
-    expect(result.landing).toEqual({ r: 0, c: 2 });
-    expect(result.outcome).toBe("stopped");
+    expect(result.landing).toEqual({ r: 0, c: 3 });
+    expect(result.outcome).toBe("fell");
   });
 
-  it("stops at the edge of a gap in the board, treating it as an edge", () => {
+  it("falls into a gap in the board, treating it the same as the edge", () => {
     const level = board(1, 4, { r: 0, c: 0 }, { r: 0, c: 1 }, [move(3)]);
     level.grid[0][3] = null;
-    expect(play(level, "se").landing).toEqual({ r: 0, c: 2 });
+    const result = play(level, "se");
+    expect(result.landing).toEqual({ r: 0, c: 3 });
+    expect(result.outcome).toBe("fell");
   });
 
   it("wins when the ball reaches the hole", () => {
