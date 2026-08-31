@@ -38,37 +38,87 @@ lost — restart it and try again.
 | tile | behaviour | scope |
 | --- | --- | --- |
 | ground | the ball travels across it and stops where the card says | core |
-| wall | stops the ball dead at the tile before it | core |
+| raised tile | a climb: stops the ball dead at the tile before it (this is the old `wall`) | core |
 | sand | stops the ball dead the moment it enters | core |
-| slope | the ball keeps sliding in the slope's direction until something stops it | core |
+| ramp | joins two levels; the ball rolls down it and can never roll up | core |
 | hole | the level is won | core |
 | water | the ball is lost; it returns to the level's start tile, card still spent | **stretch** |
 
-Slope is core because it is the only tile that *moves* the ball. Every other
-tile is a stopping rule; slope is what the finite hand actually interacts
-with, and it is where "still interesting at five minutes" comes from. Water
-is the stretch because it is the most expensive tile to teach wordlessly — a
-ball that vanishes and reappears reads as a bug, not a rule — and it adds the
-least, being a wall that costs a card.
+Height is core because it is the only thing that *changes what a card can
+reach*. Every other tile is a stopping rule; height is what the finite hand
+actually interacts with, and it is where "still interesting at five minutes"
+comes from. Water is the stretch because it is the most expensive tile to
+teach wordlessly — a ball that vanishes and reappears reads as a bug, not a
+rule — and it adds the least, being a climb that costs a card.
 
-**Card types:** `move` rolls along the ground. `jump` arcs over whatever lies
-between and lands N tiles away — it only earns its keep once there is
-something worth arcing over, so it ships only if the levels want it.
+**Card types:** `move` rolls along the ground, dropping down ledges but never
+climbing. `jump` arcs over whatever lies between and lands N tiles away, and is
+the only way up. Both are core — height is precisely the thing worth arcing
+over, so `jump` is no longer conditional.
 
-Exact resolution rules (slope chaining, stopping order) get pinned during the
-build by playing the original, not by guessing from memory.
+Exact resolution rules (height deltas, whether a drop preserves remaining
+movement, ramp chaining, stopping order) get pinned during the build by playing
+the original, not by guessing from memory.
 
-## Flat, top-down, no height
+## Isometric, with height as a mechanic
 
-Raised tiles are **out of scope**, not a stretch. Height is where the rules
-complexity lives — climb rules, the move/jump distinction, roll-down
-behaviour — and it is the only thing that would justify isometric rendering,
-which is expensive. So: a flat top-down grid, and the isometric question is
-closed.
+**This reverses the earlier decision.** The first draft closed the isometric
+question and put raised tiles out of scope, on the reasoning that height is
+where the rules complexity lives and that isometric rendering is expensive.
+Half of that held up and half did not, and both halves were tested by building
+rather than argued:
+
+- **Isometric rendering is cheap.** No 3D transforms and no library: a tile is
+  three `clip-path` faces placed at `x=(c-r)·w/2, y=(c+r)·w/4`, painted in
+  `z = r+c` order, all driven by one size knob. Height on top of that costs one
+  variable per tile. `docs/design/height-demo.png` is the proof.
+- **The rules complexity is real, and we are taking it on deliberately.** See
+  the risks below.
+
+Height also pays for itself visually, which is what prompted the reversal: flat
+top-down could only say "wall" with a darker green square, where a raised slab
+says it without words. That is the most heavily weighted spec line.
+
+**Consequences for the rules:**
+
+- **`wall` stops being a tile type.** A wall is just a tile one or more levels
+  up, blocked by the same rule that blocks any climb. One fewer thing to teach.
+- **`slope` becomes the ramp between levels** — roll down it, never up —
+  replacing "keeps the ball sliding on flat ground".
+- **`jump` becomes core, not conditional.** Height is the thing worth arcing
+  over, so the second card type is no longer optional: it is the only way up.
+- **The resolver compares heights at every step.** Higher blocks, equal
+  continues, lower drops. Whether a ball keeps its remaining movement after a
+  drop is exactly the sort of rule to pin by playing the original.
+
+**A constraint the renderer imposes on the level format:** height belongs to
+grid *vertices*, not tiles. A ramp's raised corner is a vertex shared with three
+other tiles, and if they disagree about its height the terrain tears visibly.
+Ramps therefore span a whole boundary or are bounded by a level change. This was
+found by rendering an invalid level, not by reasoning — see
+`docs/design/ramp-check.html`.
 
 Target: **6–8 levels** and a real ending screen. The binding spec line is that
 a stranger reaches an ending inside five minutes, so the level count is a cap,
 not a floor, and the opening curve should be close to insultingly gentle.
+
+## Visual contract *(draft — not yet validated against a rendered slice)*
+
+- **Palette.** Ground faces `#b6ccab` top / `#94ac8a` left / `#84997a` right,
+  seam `#a3bb98`; sand `#eddcae` stippled; cards `#dfa561`. Exactly one
+  saturated accent — flag red `#d64a3c` — reserved for the hole. Neutrals
+  are warm: the field is a wash from `#e6f1e8` down to `#f8f2e6`.
+- **Type.** Display: Nunito 900, for card values and the level number. Body:
+  Nunito 800, only ever for counts — the game carries no prose.
+- **Spacing.** An 8px scale (8/16/24/32/48). One knob `--w` (tile width) drives
+  every board dimension; card width `--cw` is independent of it.
+- **Motif.** No frame, no panels: a 2:1 isometric board floats on one continuous
+  field, board and hand centred as a single group with the level number and
+  restart pill above. Height is real — tiles are slabs, ramps are tilted
+  planes — and the whole board reads as one solid with a level base.
+- **Imagery.** Geometry only, no illustration and no icon set: terrain is told
+  apart by height, fill and stipple; affordances by one flat triangle lying in
+  the ground plane. The only glyphs are numerals and the restart arrow.
 
 ## Losing, and the score
 
@@ -97,9 +147,15 @@ is the right call anyway, since the overlay has to be as wordless as the rest.
   finishes or gives up. A pod that stalls on level 3 costs the spec's most
   heavily-weighted, least-fakeable line. Early levels should feel almost too
   easy.
-- **Teaching budget.** Five core tile types each need a level that teaches
-  them before any level gets to be *interesting*. Out of 6–8 levels that is
-  most of the budget — so teaching levels must double as real puzzles.
+- **Teaching budget — now the top risk.** Height adds three things to teach
+  wordlessly (can't roll up, can roll down, jump gets you up) on top of the
+  tile types, in the same 6–8 levels. This was flagged as the main cost of
+  taking on the full height model, and accepted deliberately. Teaching levels
+  must double as real puzzles, and if the curve slips it is the level count
+  that gets cut, not the opening's gentleness.
+- **Engine scope against the cutoff.** Two card types and a height-aware
+  resolver is materially more than the flat design was. Build order stays
+  engine-first so a playable game is always deployed.
 - **Restart discoverability.** A stranger *will* get stuck, and the restart
   has to be findable without words before they conclude the game is broken.
 - **Level design is the real work**, not the engine.
@@ -109,8 +165,8 @@ is the right call anyway, since the overlay has to be as wordless as the rest.
 Cutoff **Wed 2 Sep, 08:30** (Australia/Canberra). CI is marked fifteen minutes
 after, and green checks are worth half the shipped mark — so ship with time
 for CI to finish. Build order is engine-first so there is always a finished,
-playable game on the deployed URL: ground/wall/hole → playable → sand → slope
-→ water if time allows.
+playable game on the deployed URL: flat move + hole → playable → heights and
+climbs → ramps → jump → sand → water if time allows.
 
 ## Spec lines this has to answer
 
@@ -118,9 +174,10 @@ playable game on the deployed URL: ground/wall/hole → playable → sand → sl
 - it can be lost; play ends in a win, a loss or a finish
 - it teaches itself — no instructions anywhere, on screen or off
 - a stranger reaches an ending inside five minutes
-- **one rule under a focused automated test** — candidate: *a slope keeps the
-  ball sliding until something stops it*, or *a hand spent without holing the
-  ball loses the level and increments the restart count*
+- **one rule under a focused automated test** — candidate: *a `move` card
+  never climbs: the ball stops at the tile before a higher one*, or *a hand
+  spent without holing the ball loses the level and increments the restart
+  count*
 - **one change that came from playing the finished game**, not from reading its
   code
 - incremental commits, `PROCESS.md`, and `reflections/crit-5.md`

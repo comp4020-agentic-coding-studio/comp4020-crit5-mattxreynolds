@@ -1,0 +1,79 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B — Split rail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--t:min(calc((100vw - 300px)/5), calc((100vh - 250px)/4), 160px);
+  --ink:#16181f; --paper:#f3ead8; --card:#fffdf6;
+  --sage:#86ab6e; --gold:#f0b03f; --red:#e0483a; --s:8px}
+html,body{height:100%}
+body{font-family:Archivo,system-ui,sans-serif;color:var(--ink);background:var(--paper);
+  display:flex;overflow:hidden}
+/* board side */
+.left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--s)*3);padding:calc(var(--s)*3)}
+.hdr{display:flex;align-items:baseline;gap:12px}
+.hdr b{font-size:calc(var(--t)*.46);font-weight:900;line-height:.9}
+.hdr i{font-style:normal;font-weight:800;font-size:15px;letter-spacing:.14em;color:#8c8778}
+.board{display:grid;grid-template-columns:repeat(5,var(--t));background:var(--ink);
+  border:3.5px solid var(--ink);gap:1.5px;box-shadow:8px 8px 0 var(--ink)}
+.tile{width:var(--t);height:var(--t);background:var(--card);position:relative}
+.wall{background:var(--ink)!important}
+.sand{background:var(--gold)!important}
+.sand::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(circle,rgba(22,24,31,.42) 1.6px,transparent 1.9px) 0 0/10px 10px}
+.slope{background:var(--sage)!important}
+.slope::after{content:"";position:absolute;left:30%;top:26%;width:0;height:0;
+  border-left:calc(var(--t)*.34) solid var(--ink);border-top:calc(var(--t)*.24) solid transparent;border-bottom:calc(var(--t)*.24) solid transparent}
+.hole::after{content:"";position:absolute;inset:20%;border-radius:50%;border:5px solid var(--ink);background:var(--paper)}
+.flag{position:absolute;left:53%;bottom:50%;width:3.5px;height:calc(var(--t)*.55);background:var(--ink);z-index:3}
+.flag::after{content:"";position:absolute;left:3.5px;top:0;border-left:calc(var(--t)*.28) solid var(--red);
+  border-top:calc(var(--t)*.11) solid transparent;border-bottom:calc(var(--t)*.11) solid transparent}
+.ball{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:46%;height:46%;
+  border-radius:50%;background:#fff;border:3.5px solid var(--ink);z-index:4}
+.arw{display:grid;place-items:center}
+.arw span{width:58%;height:58%;border-radius:50%;background:var(--ink);display:grid;place-items:center;z-index:5}
+.arw span::before{content:"";margin-left:3px;border-left:calc(var(--t)*.14) solid var(--card);
+  border-top:calc(var(--t)*.10) solid transparent;border-bottom:calc(var(--t)*.10) solid transparent}
+.up span::before{transform:rotate(-90deg)} .dn span::before{transform:rotate(90deg)} .lf span::before{transform:rotate(180deg)}
+/* rail */
+.rail{width:clamp(150px,17vw,240px);background:var(--ink);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;padding:calc(var(--s)*3) var(--s)}
+.rs{display:flex;align-items:center;gap:7px;color:#f3ead8;font-weight:900;font-size:19px;margin-bottom:6px}
+.rs svg{width:21px;height:21px;fill:none;stroke:#f3ead8;stroke-width:2.6;stroke-linecap:round}
+.c{width:clamp(96px,11vw,148px);height:clamp(66px,7.4vw,100px);background:var(--card);border:3.5px solid var(--card);
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:relative}
+.c b{font-size:clamp(30px,3.6vw,50px);font-weight:900;line-height:1}
+.c .gl{width:34px;height:4px;background:var(--ink);position:relative}
+.c .gl::after{content:"";position:absolute;right:-3px;top:-6px;border-left:12px solid var(--ink);
+  border-top:8px solid transparent;border-bottom:8px solid transparent}
+.c.sel{background:var(--red);border-color:var(--card);color:var(--card)}
+.c.sel .gl{background:var(--card)}.c.sel .gl::after{border-left-color:var(--card)}
+.c.spent{background:transparent;border-color:#3c4050;color:#3c4050}
+.c.spent .gl{background:#3c4050}.c.spent .gl::after{border-left-color:#3c4050}
+@media (max-width:760px){
+  :root{--t:min(calc((100vw - 30px)/5), calc((100vh - 300px)/4), 160px)}
+  body{flex-direction:column}
+  .left{padding:calc(var(--s)*2) var(--s)}
+  .rail{width:100%;flex-direction:row;gap:10px;padding:14px 12px;justify-content:center}
+  .rs{margin:0 8px 0 0}
+  .c{width:auto;flex:0 1 96px;height:62px;padding:0 12px}
+}
+</style></head><body>
+<div class="left">
+  <div class="hdr"><b>3</b><i>LEVEL</i></div>
+  <div class="board">
+    <div class="tile"></div><div class="tile"></div><div class="tile wall"></div><div class="tile"></div><div class="tile"></div>
+    <div class="tile"></div><div class="tile arw up"><span></span></div><div class="tile"></div><div class="tile sand"></div><div class="tile"></div>
+    <div class="tile arw lf"><span></span></div><div class="tile"><div class="ball"></div></div><div class="tile arw"><span></span></div><div class="tile"></div><div class="tile hole"><div class="flag"></div></div>
+    <div class="tile"></div><div class="tile arw dn"><span></span></div><div class="tile wall"></div><div class="tile slope"></div><div class="tile"></div>
+  </div>
+</div>
+<div class="rail">
+  <div class="rs"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v6h-6"/></svg>2</div>
+  <div class="c spent"><b>1</b><div class="gl"></div></div>
+  <div class="c sel"><b>3</b><div class="gl"></div></div>
+  <div class="c"><b>2</b><div class="gl"></div></div>
+</div>
+</body></html>

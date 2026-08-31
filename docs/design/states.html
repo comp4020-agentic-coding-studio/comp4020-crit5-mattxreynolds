@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>A-iso slice — four states</title>
+<style>
+body{margin:0;padding:26px;background:#e9e9ec;font:13px/1.4 ui-sans-serif,system-ui,sans-serif;color:#222}
+h1{font-size:15px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;color:#666}
+.sub{color:#888;margin:0 0 22px;font-size:12px}
+.cols{display:grid;grid-template-columns:repeat(4,430px);gap:24px}
+h2{font-size:14px;margin:0 0 3px}p{margin:0 0 12px;color:#666;font-size:12px;min-height:58px}
+img{display:block;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.13)}
+.d{width:430px}.p{width:150px;margin-top:12px}
+.lab{font-size:10px;letter-spacing:.14em;color:#999;text-transform:uppercase;margin:0 0 5px}
+</style></head><body>
+<h1>Direction A, isometric — the four states</h1>
+<p class="sub">One flat grid engine. Height is drawn, never simulated — a wall is still just “stops the ball”.</p>
+<div class="cols">
+  <div><h2>1 · Level 1, idle</h2><p>Ball, hole two tiles away, one card. Tile seams make the “2” countable. No arrows yet — nothing is offered until a card is held.</p>
+    <div class="lab">1920×1080</div><img class="d" src="iso-start-desktop.png">
+    <div class="lab">390×844</div><img class="p" src="iso-start-phone.png"></div>
+  <div><h2>2 · Card held</h2><p>Tapping the card raises it and reveals the directions on the three reachable tiles. One of them holes out; the other two lose the level.</p>
+    <div class="lab">1920×1080</div><img class="d" src="iso-armed-desktop.png">
+    <div class="lab">390×844</div><img class="p" src="iso-armed-phone.png"></div>
+  <div><h2>3 · Mid-play, level 3</h2><p>Wall as a raised block, sand stippled, slope as an actual tilted plane. Spent card greyed. Restart is always available in the top bar.</p>
+    <div class="lab">1920×1080</div><img class="d" src="iso-play-desktop.png">
+    <div class="lab">390×844</div><img class="p" src="iso-play-phone.png"></div>
+  <div><h2>4 · Lost, hand spent</h2><p>Board dims behind the three spent cards and a restart. Not a &lt;dialog&gt;, no role=dialog, no “modal” class, no words — all four would fail the spec suite.</p>
+    <div class="lab">1920×1080</div><img class="d" src="iso-lost-desktop.png">
+    <div class="lab">390×844</div><img class="p" src="iso-lost-phone.png"></div>
+</div></body></html>

@@ -1,0 +1,69 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C — Printed sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--t:min(calc((100vw - 120px)/5), calc((100vh - 330px)/4), 162px);
+  --paper:#faf7f0; --ink:#22242a; --hair:rgba(34,36,42,.42); --red:#c62f1e; --s:8px}
+html,body{height:100%}
+body{font-family:"IBM Plex Mono",ui-monospace,monospace;color:var(--ink);background:var(--paper);
+  padding:clamp(14px,2.6vmin,34px);overflow:hidden}
+.sheet{height:100%;border:1px solid var(--hair);display:flex;flex-direction:column;
+  padding:clamp(12px,2.2vmin,26px)}
+.hdr,.ftr{display:flex;align-items:center;justify-content:space-between;
+  font-size:clamp(10px,1.25vmin,13px);letter-spacing:.22em;font-weight:500}
+.hdr{border-bottom:1px solid var(--hair);padding-bottom:10px}
+.ftr{border-top:1px solid var(--hair);padding-top:10px;color:var(--hair)}
+.stage{flex:1;display:grid;place-items:center;padding:clamp(10px,2.4vmin,28px) 0}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:clamp(16px,3.4vmin,40px)}
+.board{display:grid;grid-template-columns:repeat(5,var(--t));border-top:1px solid var(--ink);border-left:1px solid var(--ink)}
+.tile{width:var(--t);height:var(--t);border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);position:relative}
+.wall{background:var(--ink)}
+.sand{background:radial-gradient(circle,var(--ink) 1.1px,transparent 1.4px) 0 0/7px 7px}
+.slope{background:repeating-linear-gradient(45deg,transparent 0 5px,rgba(34,36,42,.30) 5px 6px)}
+.slope::after{content:"";position:absolute;left:30%;top:28%;width:0;height:0;
+  border-left:calc(var(--t)*.32) solid var(--ink);border-top:calc(var(--t)*.22) solid transparent;border-bottom:calc(var(--t)*.22) solid transparent}
+.hole::after{content:"";position:absolute;inset:26%;border-radius:50%;background:var(--ink)}
+.flag{position:absolute;left:52%;bottom:50%;width:1.5px;height:calc(var(--t)*.56);background:var(--ink);z-index:3}
+.flag::after{content:"";position:absolute;left:1.5px;top:0;border-left:calc(var(--t)*.26) solid var(--red);
+  border-top:calc(var(--t)*.10) solid transparent;border-bottom:calc(var(--t)*.10) solid transparent}
+.ball{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:38%;height:38%;
+  border-radius:50%;background:var(--paper);border:1.5px solid var(--ink);z-index:4}
+.ball::after{content:"";position:absolute;inset:30%;border-radius:50%;background:var(--ink)}
+.arw{display:grid;place-items:center}
+.arw span{width:0;height:0;border-left:calc(var(--t)*.22) solid var(--red);
+  border-top:calc(var(--t)*.15) solid transparent;border-bottom:calc(var(--t)*.15) solid transparent;z-index:5}
+.up span{transform:rotate(-90deg)} .dn span{transform:rotate(90deg)} .lf span{transform:rotate(180deg)}
+/* chits on a ruled baseline */
+.hand{display:flex;gap:clamp(8px,1.6vmin,18px);border-bottom:1px solid var(--ink);padding-bottom:clamp(8px,1.6vmin,16px)}
+.c{width:calc(var(--t)*.92);height:calc(var(--t)*1.16);border:1px solid var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.c b{font-size:calc(var(--t)*.46);font-weight:500;line-height:1}
+.c .gl{width:44%;height:1.5px;background:var(--ink);position:relative}
+.c .gl::after{content:"";position:absolute;right:-2px;top:-4px;border-left:8px solid var(--ink);
+  border-top:5px solid transparent;border-bottom:5px solid transparent}
+.c.sel{border-color:var(--red);color:var(--red);box-shadow:0 0 0 3px var(--paper),0 0 0 4px var(--red)}
+.c.sel .gl{background:var(--red)}.c.sel .gl::after{border-left-color:var(--red)}
+.c.spent{border-style:dashed;color:var(--hair);border-color:var(--hair)}
+.c.spent .gl{background:var(--hair)}.c.spent .gl::after{border-left-color:var(--hair)}
+</style></head><body>
+<div class="sheet">
+  <div class="hdr"><span>HOLE 03</span><span>&#8634; 02</span></div>
+  <div class="stage"><div class="wrap">
+    <div class="board">
+      <div class="tile"></div><div class="tile"></div><div class="tile wall"></div><div class="tile"></div><div class="tile"></div>
+      <div class="tile"></div><div class="tile arw up"><span></span></div><div class="tile"></div><div class="tile sand"></div><div class="tile"></div>
+      <div class="tile arw lf"><span></span></div><div class="tile"><div class="ball"></div></div><div class="tile arw"><span></span></div><div class="tile"></div><div class="tile hole"><div class="flag"></div></div>
+      <div class="tile"></div><div class="tile arw dn"><span></span></div><div class="tile wall"></div><div class="tile slope"></div><div class="tile"></div>
+    </div>
+    <div class="hand">
+      <div class="c spent"><b>1</b><div class="gl"></div></div>
+      <div class="c sel"><b>3</b><div class="gl"></div></div>
+      <div class="c"><b>2</b><div class="gl"></div></div>
+    </div>
+  </div></div>
+  <div class="ftr"><span></span><span>M&#183;R</span></div>
+</div>
+</body></html>

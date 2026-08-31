@@ -30,3 +30,6 @@ mise.local.toml
 !.claude/agents/
 !.claude/agents/**
 .astro/
+
+# design scratch (reference screenshots, throwaway renders)
+.scratch/
