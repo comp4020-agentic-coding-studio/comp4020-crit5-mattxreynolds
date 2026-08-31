@@ -49,21 +49,6 @@ skipped run still exits 0 under `gh run watch`, so check the run's conclusion,
 not the exit code). Links check and secrets scan pass, both of which have never
 executed on this repo. A stranger can finish L1 without being told anything.
 
-### T11 — Ending screen and the run score
-
-**Carried from T5:** `finished` currently falls through to the lost screen's
-markup without the dim. It needs its own treatment, or a win and a loss look
-alike.
-
-Finishing the last level ends the run, showing the total restart count.
-Wordless: numerals and icons only.
-
-**Done when:** finishing the last level reaches a distinct end state.
-
-**Acceptance:** answers *"play ends somewhere — a win, a loss or a finish"*. No
-`<dialog>`, no `role="dialog"`, no `modal` in any class or id, no instruction
-words — all four fail `spec/crit-5.test.ts`.
-
 ### T12 — Link-preview card and description *(independent)*
 
 Replace `public/card.png` (1200×630) with a real render of the game, and the
@@ -143,6 +128,10 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T11 — Ending screen and the run score** — finishing the last level reaches
+  its own screen: the goal at size, and the run's restart count as the score.
+  Wordless. The gutter restart becomes play-again, and the score reads 0 on a
+  clean run.
 - **T10 — The level set, and a solvability test** — eight levels, one new idea
   each: move, distance, four directions with a wrong one among them, a step
   that blocks, a step that doesn't, the ramp between them, the card that

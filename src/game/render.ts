@@ -29,22 +29,44 @@ export function screenHTML(run: Run): string {
 
   const classes = ["screen", armed !== null ? "armed" : ""].filter(Boolean).join(" ");
 
+  if (run.phase === "finished") return finishHTML(run);
+
   return [
     `<section class="${classes}" data-phase="${run.phase}">`,
-    gutter(run),
+    gutter(run, true, "Restart level"),
     `<div class="stage">${boardHTML(level, run, marks)}</div>`,
     run.phase === "play" ? handHTML(run, level) : endHTML(level),
     `</section>`,
   ].join("");
 }
 
-/** Level number left, restart right --- one restart, one place, every state. */
-function gutter(run: Run): string {
+/** Level number left, restart right --- one restart, one place, every state.
+ *  On the ending screen there is no current level to number, and the restart
+ *  starts the whole run again rather than the last level of it. */
+function gutter(run: Run, level: boolean, label: string): string {
   return [
     `<div class="top-bar">`,
-    `<div class="lvl">${run.index + 1}</div>`,
-    `<button class="redo sm" type="button" data-act="restart" aria-label="Restart level">${RESTART_ICON}</button>`,
+    level ? `<div class="lvl">${run.index + 1}</div>` : `<div></div>`,
+    `<button class="redo sm" type="button" data-act="restart" aria-label="${label}">${RESTART_ICON}</button>`,
     `</div>`,
+  ].join("");
+}
+
+/** The run is over. Not the board dimmed but the goal itself, and the score:
+ *  how many restarts it took, which is the thing to beat on the next run.
+ *
+ *  The counted glyph and the button are the same restart mark on purpose ---
+ *  it is the thing being counted --- and they are told apart by the contract's
+ *  own rule: orange is what you can act on, so the score is ink on the field
+ *  and only the gutter disc is a control. */
+function finishHTML(run: Run): string {
+  return [
+    `<section class="screen finished" data-phase="finished">`,
+    gutter(run, false, "Play again"),
+    `<div class="stage"><div class="finish"><div class="cup"></div><div class="flag"></div></div></div>`,
+    `<div class="score"><span class="score-mark" aria-hidden="true">${RESTART_ICON}</span>`,
+    `<span class="score-num">${run.restarts}</span></div>`,
+    `</section>`,
   ].join("");
 }
 

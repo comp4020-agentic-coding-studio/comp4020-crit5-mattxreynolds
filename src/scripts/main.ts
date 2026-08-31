@@ -54,7 +54,9 @@ function start(root: HTMLElement): void {
 
     const restartButton = target.closest("[data-act='restart']");
     if (restartButton) {
-      run = restart(run);
+      // Once the run is over the same control starts a new one, from the top,
+      // with the score back to zero --- there is no level left to restart.
+      run = run.phase === "finished" ? startRun(LEVELS) : restart(run);
       paint();
       return;
     }
