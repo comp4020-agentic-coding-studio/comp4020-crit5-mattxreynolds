@@ -35,17 +35,6 @@ private. T5 is where that gets discovered, not the morning of the cutoff.
 
 ## Backlog
 
-### T4 — Resolver: `move` on flat ground
-
-`src/game/rules.ts` — `resolve(level, from, card, dir)` returning the stepped
-path, the landing tile, and the outcome. Flat only: travel up to N, stop at the
-board edge, hole wins.
-
-**Done when:** unit tests cover travel, edge-stop, and holing out.
-
-**Acceptance:** pure function, no DOM import. The returned path is every tile
-stepped through, because T5's animation and marker placement both need it.
-
 ### T5 — Wiring, render, and the landing-tile markers
 
 - `src/game/state.ts` (run state) and `src/game/render.ts` (state → DOM).
@@ -202,6 +191,9 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T4 — Resolver: `move` on flat ground** — `resolve()` returns the whole
+  stepped path, the landing and the outcome. Pure; a no-op direction resolves
+  to the start tile rather than erroring, so T5 can decline to offer it.
 - **T3 — Level format and validator** — `types.ts`, `levels.ts`, `validate.ts`.
   Height lives on grid vertices; a vertex is only checked where a ramp touches
   it, so a cliff stays legal and only a ramp that tears the ground is rejected.
