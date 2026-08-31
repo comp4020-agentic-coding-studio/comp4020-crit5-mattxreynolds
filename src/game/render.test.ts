@@ -176,6 +176,14 @@ describe("the two card types", () => {
     const text = doc.querySelector(".hand")?.textContent?.replace(/\s+/g, "") ?? "";
     expect(text).toBe("11");
   });
+
+  it("names each card type for assistive technology", () => {
+    const buttons = [...doc.querySelectorAll<HTMLButtonElement>("button.c")];
+    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Play move card 1",
+      "Play jump card 1",
+    ]);
+  });
 });
 
 describe("the hand and the gutter", () => {
@@ -184,6 +192,12 @@ describe("the hand and the gutter", () => {
     const cards = doc.querySelectorAll(".hand .c");
     expect(cards.length).toBe(LEVELS[0].hand.length);
     expect(cards[0].querySelector(".num")?.textContent).toBe("2");
+    expect(doc.querySelector(".hand")?.classList.contains("cards-1")).toBe(true);
+  });
+
+  it("exposes the hand size so every count can form a deliberate fan", () => {
+    const doc = dom(screenHTML(startRun(LEVELS, 11)));
+    expect(doc.querySelector(".hand")?.classList.contains("cards-6")).toBe(true);
   });
 
   it("keeps the level and progress symmetrical in the toolbar, with the tally below", () => {

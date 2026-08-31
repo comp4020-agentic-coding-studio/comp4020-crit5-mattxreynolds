@@ -206,7 +206,7 @@ function handHTML(run: Run, level: Level): string {
   const cards = level.hand
     .map((card, i) => cardHTML(card.kind, card.value, run.spent[i], run.armed === i, i))
     .join("");
-  return `<div class="hand">${cards}</div>`;
+  return `<div class="hand cards-${level.hand.length}">${cards}</div>`;
 }
 
 /** The end of a level, and for now the end of a run: the spent hand sitting
@@ -217,7 +217,7 @@ function endHTML(level: Level): string {
   return [
     `<div class="endcard">`,
     `<button class="redo loss-restart" type="button" data-act="restart" aria-label="Restart level">${RESTART_ICON}</button>`,
-    `<div class="hand">${cards}</div>`,
+    `<div class="hand cards-${level.hand.length}">${cards}</div>`,
     `</div>`,
   ].join("");
 }
@@ -234,5 +234,5 @@ function cardHTML(
   const face = `<div class="num">${value}</div>${mark}`;
 
   if (spent || index === undefined) return `<div class="${classes}">${face}</div>`;
-  return `<button class="${classes}" type="button" data-card="${index}" aria-label="Play card ${value}">${face}</button>`;
+  return `<button class="${classes}" type="button" data-card="${index}" aria-label="Play ${kind} card ${value}">${face}</button>`;
 }

@@ -569,10 +569,13 @@ main {
 
 .c {
   position: relative;
+  z-index: 1;
   display: grid;
+  --turn: 0deg;
+  --fan-y: 0px;
   width: var(--cw);
   height: calc(var(--cw) * 1.4);
-  margin: 0 calc(var(--s1) * -1);
+  margin: 0 -5px;
   border: 0;
   border-radius: var(--s2);
   background: var(--card);
@@ -580,14 +583,49 @@ main {
   cursor: pointer;
   font: inherit;
   place-items: center;
+  transform: translateY(var(--fan-y)) rotate(var(--turn));
   transition: transform 0.16s, box-shadow 0.16s;
 }
 
-.c:nth-child(1) { transform: rotate(-6deg); }
-.c:nth-child(3) { transform: rotate(6deg); }
-.hand .c:only-child { transform: none; }
+.cards-2 .c:nth-child(1) { --turn: -3deg; --fan-y: 2px; }
+.cards-2 .c:nth-child(2) { --turn: 3deg; --fan-y: 2px; }
+
+.cards-3 .c:nth-child(1) { --turn: -6deg; --fan-y: 5px; }
+.cards-3 .c:nth-child(2) { --turn: 0deg; --fan-y: 0px; }
+.cards-3 .c:nth-child(3) { --turn: 6deg; --fan-y: 5px; }
+
+.cards-4 .c:nth-child(1) { --turn: -6deg; --fan-y: 6px; }
+.cards-4 .c:nth-child(2) { --turn: -2deg; --fan-y: 1px; }
+.cards-4 .c:nth-child(3) { --turn: 2deg; --fan-y: 1px; }
+.cards-4 .c:nth-child(4) { --turn: 6deg; --fan-y: 6px; }
+
+.cards-5 .c:nth-child(1) { --turn: -7deg; --fan-y: 8px; }
+.cards-5 .c:nth-child(2) { --turn: -3.5deg; --fan-y: 3px; }
+.cards-5 .c:nth-child(3) { --turn: 0deg; --fan-y: 0px; }
+.cards-5 .c:nth-child(4) { --turn: 3.5deg; --fan-y: 3px; }
+.cards-5 .c:nth-child(5) { --turn: 7deg; --fan-y: 8px; }
+
+.cards-6 .c:nth-child(1) { --turn: -7deg; --fan-y: 9px; }
+.cards-6 .c:nth-child(2) { --turn: -4deg; --fan-y: 4px; }
+.cards-6 .c:nth-child(3) { --turn: -1.5deg; --fan-y: 1px; }
+.cards-6 .c:nth-child(4) { --turn: 1.5deg; --fan-y: 1px; }
+.cards-6 .c:nth-child(5) { --turn: 4deg; --fan-y: 4px; }
+.cards-6 .c:nth-child(6) { --turn: 7deg; --fan-y: 9px; }
+
+button.c:not(.sel):hover {
+  z-index: 3;
+  box-shadow: 0 10px 17px rgba(90, 70, 40, 0.3), inset 0 -5px 0 rgba(0, 0, 0, 0.09);
+  transform: translateY(calc(var(--fan-y) - 4px)) rotate(var(--turn));
+}
+
+button.c:focus-visible {
+  z-index: 11;
+  outline: 4px solid var(--white);
+  outline-offset: 3px;
+}
 
 .c.sel {
+  z-index: 10;
   box-shadow: 0 12px 20px rgba(90, 70, 40, 0.3), 0 0 0 4px var(--white),
     inset 0 -5px 0 rgba(0, 0, 0, 0.09);
   transform: translateY(calc(var(--s3) * -1)) rotate(0) !important;
@@ -651,6 +689,7 @@ main {
   border-right: 8px solid transparent;
   border-left: 8px solid transparent;
 }
+
 
 /* --- the end of a run ----------------------------------------------------- */
 
@@ -766,8 +805,8 @@ main {
 }
 
 @keyframes spent-drop {
-  from { transform: translateY(-10px) rotate(0); opacity: 0.9; }
-  to { transform: translateY(0) rotate(0); opacity: 1; }
+  from { transform: translateY(calc(var(--fan-y) - 10px)) rotate(var(--turn)); opacity: 0.9; }
+  to { transform: translateY(var(--fan-y)) rotate(var(--turn)); opacity: 1; }
 }
 
 @keyframes score-arrive {
@@ -777,8 +816,14 @@ main {
 
 .endcard .c {
   margin: 0 var(--s1) 0 0;
-  transform: none !important;
 }
+
+.endcard .cards-6 .c:nth-child(1) { --turn: -9deg; --fan-y: 11px; }
+.endcard .cards-6 .c:nth-child(2) { --turn: -5.5deg; --fan-y: 5px; }
+.endcard .cards-6 .c:nth-child(3) { --turn: -2deg; --fan-y: 1px; }
+.endcard .cards-6 .c:nth-child(4) { --turn: 2deg; --fan-y: 1px; }
+.endcard .cards-6 .c:nth-child(5) { --turn: 5.5deg; --fan-y: 5px; }
+.endcard .cards-6 .c:nth-child(6) { --turn: 9deg; --fan-y: 11px; }
 
 .endcard .c.spent {
   background: #bdb7a6;
@@ -851,7 +896,7 @@ main {
   .progress-step.failed { width: 12px; height: 12px; border-width: 2px; }
 
   .endcard { gap: var(--s2); }
-  .endcard .c { margin-right: -6px; margin-left: -6px; }
+  .endcard .c { margin-right: -4px; margin-left: -4px; }
   .lvl,
   .redo.sm { width: 44px; height: 44px; }
   .redo { width: 60px; height: 60px; }
