@@ -102,29 +102,52 @@ Target: **6–8 levels** and a real ending screen. The binding spec line is that
 a stranger reaches an ending inside five minutes, so the level count is a cap,
 not a floor, and the opening curve should be close to insultingly gentle.
 
-## Visual contract *(draft — not yet validated against a rendered slice)*
+## Visual contract
 
-- **Palette.** Two committed colours and no others: card orange `#dfa561` for
-  anything you can act on (cards, the restart button), flag red `#d64a3c` for
-  the goal and nothing else. Terrain is one green ramp — fairway `#b6ccab` top
-  / `#94ac8a` left / `#84997a` right, seam `#a3bb98`; raised ground the same
-  ramp two steps darker; sand `#eddcae` stippled. **Higher ground is always
-  darker — one convention, every page.** The field is a wash `#e6f1e8` →
-  `#f8f2e6`.
-- **Type.** Display: Nunito 900, card values and the level number. Body: Nunito
-  800, counts only — the game carries no prose.
-- **Spacing.** 8/16/24/32/48, as `--s1`…`--s6`. One knob `--w` (tile width)
+- **Palette.** Card orange `#dfa561` marks anything you can act on *in the card
+  and button layer*; flag red `#d64a3c` marks the goal and nothing else. On the
+  board itself an affordance is a white tile ring plus an ink marker, because
+  the terrain green cannot carry orange at usable contrast (measured ≈1.2:1).
+  Terrain is one green ramp — fairway `#b6ccab` top / `#94ac8a` left /
+  `#84997a` right, seam `#a3bb98`; raised ground the same ramp two steps
+  darker; sand `#eddcae` stippled. **Higher ground is always darker — one
+  convention, every page.** Field wash `#e6f1e8` → `#f8f2e6`. The lost state
+  desaturates the whole board on purpose, so the restart is the only saturated
+  thing left; that is a state treatment, not a second palette.
+- **Type.** One display role: Nunito 900 numerals. The card value outranks the
+  level number. There is no body role, because there is no prose and no counts.
+- **Spacing.** 8/16/24/32/48 as `--s1`…`--s6`. One knob `--w` (tile width)
   drives every board dimension; card width `--cw` is independent.
-- **Motif.** No frame, no panels: a 2:1 isometric board floats on one continuous
-  field with board and hand centred as a single group, the level number and
-  restart pinned to the viewport gutters above. Height is real — tiles are
-  slabs, ramps are tilted planes — and the board reads as one solid on a level
-  base.
+- **Motif.** No page-level frame or panel: a 2:1 isometric board floats on one
+  continuous field, board and hand centred as a single group, level number and
+  restart pinned to the viewport gutters — one restart, one place, every state.
+  Height is real: tiles are slabs, ramps are tilted planes, and the board reads
+  as one solid on a level base.
 - **Imagery.** Geometry only, no illustration and no icon set. Terrain is told
-  apart by height, fill and stipple. A direction marker is a stem *and* a head
-  lying in the ground plane: a bare triangle sheared into the plane reads as a
-  wedge pointing at the ball, not as a heading. The only glyphs are numerals,
-  the card's move/jump mark, and the restart arrow.
+  apart by height, fill and stipple. A direction marker is one filled arrow
+  lying in the ground plane, sized to stay inside its own tile: split into a
+  separate stem and head it comes apart under the shear, and a bare triangle
+  reads as a wedge aimed at the ball rather than a heading. The only glyphs are
+  numerals, the card's move/jump mark, and the restart arrow.
+
+## What the design critic still has open
+
+The contract above was validated against a rendered slice over two independent
+critiques (`docs/design/iso-slice.html`). These survive and belong to `plan`,
+not to `design`:
+
+- **Markers sit on the adjacent tile, not the landing tile.** A card reading `2`
+  puts its marker one tile away, so the numeral never teaches itself. Moving the
+  marker to where the ball actually stops fixes that for free — but it needs the
+  resolver, which is why it is a build task and not a visual one.
+- **`move` versus `jump` is never demonstrated in a played state.** The rule that
+  a `move` card cannot climb has no on-screen consequence a stranger can see.
+  This is level-design work, and it is the same teaching-budget risk named above.
+- **Composition differs between viewports.** Desktop leaves large dead field on
+  the smallest levels; phone gives the hand more visual weight than the board.
+  These need different treatments rather than one shared cap.
+- **Three hand layouts across four states** (single card, rotated fan, flat row).
+  Pick one.
 
 ## Losing, and the score
 
