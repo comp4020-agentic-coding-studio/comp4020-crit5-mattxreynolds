@@ -2,7 +2,7 @@ import { LEVELS } from "../game/levels";
 import { screenHTML } from "../game/render";
 import { resolve } from "../game/rules";
 import { type Run, arm, currentLevel, playCard, restart, startRun } from "../game/state";
-import { type Dir, type Pos, isRamp } from "../game/types";
+import { STEP, type Dir, type Pos, isRamp } from "../game/types";
 
 // Wiring: events in, render out. Everything it decides, it asks the engine.
 
@@ -83,7 +83,18 @@ function start(root: HTMLElement): void {
     const move = resolve(level, run.ball, level.hand[index], dir);
 
     busy = true;
-    const settled = await roll(move.path);
+
+    // Every direction is offered now, and some of them are walls. A card is
+    // spent when the ball *moves* --- rolling up a ramp and back down counts,
+    // because it moved and it showed you why it failed. Nothing at all does
+    // not: the ball leans that way, finds it cannot, and settles back, and the
+    // hand is untouched.
+    if (move.path.length < 2) {
+      await nudge(dir);
+      busy = false;
+      return;
+    }
+    const settled = await roll(move.path, level.hand[index].kind === "jump");
     if (move.outcome === "holed") {
       await sink(settled);
       await wait(HOLED_PAUSE_MS);
@@ -95,7 +106,7 @@ function start(root: HTMLElement): void {
 
   /** Animate the ball tile by tile along the path it actually took, and report
    *  where it came to rest so a holing ball can carry on into the cup. */
-  async function roll(path: Pos[]): Promise<Settled | null> {
+  async function roll(path: Pos[], arcs: boolean): Promise<Settled | null> {
     const board = root.querySelector<HTMLElement>(".board");
     const ball = root.querySelector<HTMLElement>(".ball");
     const shadow = root.querySelector<HTMLElement>(".shdw");
@@ -140,7 +151,7 @@ function start(root: HTMLElement): void {
     // is the whole of what makes it read as running out of momentum rather
     // than changing its mind.
     const heights = path.map(heightAt);
-    const frames = (base: string): Keyframe[] =>
+    const rolled = (base: string): Keyframe[] =>
       offsets.map(({ dx, dy }, i) => {
         const frame: Keyframe = { transform: `translate(${dx}px, ${dy}px) ${base}` };
         if (i < heights.length - 1) {
@@ -150,16 +161,66 @@ function start(root: HTMLElement): void {
         return frame;
       });
 
+    /** A jump is one throw, not a series of steps: the ball leaves the ground,
+     *  crosses whatever is under it and comes down. The height is a plain
+     *  parabola sampled often enough to read as a curve, scaled to how far the
+     *  throw is --- and the shadow stays on the ground and shrinks, which is
+     *  what actually says the ball is in the air rather than sliding. */
+    const end = offsets[offsets.length - 1];
+    const tiles = Math.max(1, Math.abs(path[path.length - 1].c - path[0].c) + Math.abs(path[path.length - 1].r - path[0].r));
+    const hop = w * (0.34 + 0.1 * tiles);
+    const SAMPLES = 16;
+
+    const thrown = (base: string, ground: boolean): Keyframe[] =>
+      Array.from({ length: SAMPLES + 1 }, (_, i) => {
+        const t = i / SAMPLES;
+        const lift = 4 * t * (1 - t);
+        const dx = end.dx * t;
+        const dy = end.dy * t - (ground ? 0 : hop * lift);
+        const scale = ground ? `scale(${(1 - 0.4 * lift).toFixed(3)})` : "";
+        return { transform: `translate(${dx}px, ${dy}px) ${base} ${scale}`, easing: "linear" };
+      });
+
+    const frames = arcs
+      ? (base: string, ground = false): Keyframe[] => thrown(base, ground)
+      : (base: string): Keyframe[] => rolled(base);
+
     const timing: KeyframeAnimationOptions = {
-      duration: STEP_MS * (path.length - 1),
+      duration: arcs ? Math.max(340, STEP_MS * tiles) : STEP_MS * (path.length - 1),
       fill: "forwards",
     };
 
     const animations = [ball.animate(frames(BALL_BASE), timing)];
-    if (shadow) animations.push(shadow.animate(frames(SHADOW_BASE), timing));
+    if (shadow) animations.push(shadow.animate(frames(SHADOW_BASE, true), timing));
 
     await Promise.all(animations.map((a) => a.finished.catch(() => undefined)));
     return { ...offsets[offsets.length - 1], w };
+  }
+
+  /** A direction the ball simply cannot take. It leans into it and settles
+   *  back --- enough to say "not that way" without spending anything, and the
+   *  same shape of answer the ramp gives when a climb is too steep. */
+  async function nudge(dir: Dir): Promise<void> {
+    const ball = root.querySelector<HTMLElement>(".ball");
+    const shadow = root.querySelector<HTMLElement>(".shdw");
+    const tile = ball?.closest<HTMLElement>(".t");
+    if (!ball || !tile) return;
+
+    const w = tile.getBoundingClientRect().width;
+    const { dr, dc } = STEP[dir];
+    const dx = (dc - dr) * (w / 2) * 0.17;
+    const dy = (dc + dr) * (w / 4) * 0.17;
+
+    const lean = (base: string): Keyframe[] => [
+      { transform: `translate(0, 0) ${base}` },
+      { transform: `translate(${dx}px, ${dy}px) ${base}`, offset: 0.4 },
+      { transform: `translate(0, 0) ${base}` },
+    ];
+    const timing: KeyframeAnimationOptions = { duration: 260, easing: "ease-in-out" };
+
+    const leaning = [ball.animate(lean(BALL_BASE), timing)];
+    if (shadow) leaning.push(shadow.animate(lean(SHADOW_BASE), timing));
+    await Promise.all(leaning.map((a) => a.finished.catch(() => undefined)));
   }
 
   /** Re-parent an element onto the board, keeping it exactly where it looks

@@ -1,6 +1,6 @@
-import { offers } from "./rules";
 import { type Run, currentLevel } from "./state";
 import {
+  DIRS,
   STEP,
   type Dir,
   type Level,
@@ -25,7 +25,12 @@ const RESTART_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 1
 export function screenHTML(run: Run): string {
   const level = currentLevel(run);
   const armed = run.phase === "play" && run.armed !== null ? run.armed : null;
-  const marks = armed === null ? [] : offers(level, run.ball, level.hand[armed]);
+
+  // All four directions, always. An arrow goes on the square beside the ball
+  // whatever the card would do from there --- and whether or not there is a
+  // square there at all. Which of them actually moves the ball is the
+  // engine's business, and the player finds out by tapping one.
+  const marked = armed === null ? [] : DIRS.map((dir) => ({ dir, cell: step(run.ball, dir) }));
 
   const classes = ["screen", armed !== null ? "armed" : ""].filter(Boolean).join(" ");
 
@@ -34,7 +39,7 @@ export function screenHTML(run: Run): string {
   return [
     `<section class="${classes}" data-phase="${run.phase}">`,
     gutter(run, true, "Restart level"),
-    `<div class="stage">${boardHTML(level, run, marks)}</div>`,
+    `<div class="stage">${boardHTML(level, run, marked)}</div>`,
     run.phase === "play" ? handHTML(run, level) : endHTML(level),
     `</section>`,
   ].join("");
@@ -72,12 +77,10 @@ function finishHTML(run: Run): string {
 
 // --- the board ------------------------------------------------------------
 
-function boardHTML(level: Level, run: Run, marks: Array<{ dir: Dir; move: unknown }>): string {
+function boardHTML(level: Level, run: Run, marked: Marker[]): string {
   const rows = level.grid.length;
   const cols = level.grid[0].length;
 
-  // --fx and --fy are the reciprocals styles.css multiplies by; see the note
-  // there. Reciprocals so calc() only ever has to multiply by a number.
   // Raised ground is drawn *above* the flat board's box, so the box has to
   // make room for the tallest thing on the level or it centres by the wrong
   // rectangle and the back row rides up under the gutter bar. A ramp counts as
@@ -90,40 +93,51 @@ function boardHTML(level: Level, run: Run, marks: Array<{ dir: Dir; move: unknow
   const fx = 2 / (cols + rows);
   const fy = 1 / ((cols + rows - 2) / 4 + 0.8 + peak * 0.3);
 
-  // Markers sit on the tile *next to* the ball, not on the tile it would land
-  // on. They read as a direction chooser --- four arrows around the ball ---
-  // rather than as four destinations scattered at different distances.
-  const marked = new Map<string, Dir>();
-  for (const mark of marks as Array<{ dir: Dir; move: { landing: Pos } }>) {
-    const next = step(run.ball, mark.dir);
-    // A jump can clear a gap, in which case there is no tile beside the ball
-    // to draw on; fall back to where it lands.
-    marked.set(key(tileAt(level, next) ? next : mark.move.landing), mark.dir);
-  }
-
   const tiles = level.grid
-    .flatMap((row, r) => row.map((tile, c) => (tile ? tileHTML(tile, r, c, run, marked) : "")))
+    .flatMap((row, r) => row.map((tile, c) => (tile ? tileHTML(tile, r, c, run) : "")))
     .join("");
 
-  // Desaturating the board is the *lost* treatment --- it exists so the
-  // position you lost from stays readable while the restart is the only
-  // saturated thing left. A finished run is not that, and gets its own
-  // treatment in T11.
   const dim = run.phase === "lost" ? " dim" : "";
   const shape = `--cols:${cols};--rows:${rows};--peak:${peak};--fx:${fx.toFixed(5)};--fy:${fy.toFixed(5)}`;
-  return `<div class="board${dim}" style="${shape}">${tiles}</div>`;
+  return `<div class="board${dim}" style="${shape}">${tiles}${markerLayer(level, run, marked)}</div>`;
 }
 
-const key = (p: Pos): string => `${p.r},${p.c}`;
+interface Marker {
+  dir: Dir;
+  cell: Pos;
+}
 
-function tileHTML(
-  tile: Tile,
-  r: number,
-  c: number,
-  run: Run,
-  marked: Map<string, Dir>,
-): string {
-  const dir = marked.get(key({ r, c }));
+/** Arrows live on the board, not inside tiles.
+ *
+ *  They have to: an arrow's square may be a gap in the board or past its edge,
+ *  and a thing that only exists inside a tile cannot be drawn where there
+ *  isn't one. Positioned by the same formula the tiles use, so an arrow over
+ *  nothing still lines up with the row it belongs to. */
+function markerLayer(level: Level, run: Run, marked: Marker[]): string {
+  const standing = tileAt(level, run.ball);
+
+  return marked
+    .map(({ dir, cell }) => {
+      const tile = tileAt(level, cell);
+      // Over a gap there is no ground to sit on, so the arrow keeps the height
+      // the ball is at. On a ramp it sits halfway up, as the ball does.
+      const height = tile
+        ? tile.height + (isRamp(tile) ? 0.5 : 0)
+        : (standing?.height ?? 0);
+      const slope = tile && isRamp(tile) ? ` sl sl-${tile.ramp}` : "";
+      const place = `--r:${cell.r};--c:${cell.c};--lv:${height}`;
+
+      return [
+        `<div class="mk${slope}" style="${place}">`,
+        `<div class="pl ar" style="--rot:${STEP[dir].rot}deg"><i class="tri"></i></div>`,
+        `<button class="hit" type="button" data-dir="${dir}" aria-label="Roll ${dir}"></button>`,
+        `</div>`,
+      ].join("");
+    })
+    .join("");
+}
+
+function tileHTML(tile: Tile, r: number, c: number, run: Run): string {
   const parts = [
     `<div class="fl"></div>`,
     `<div class="fr"></div>`,
@@ -135,14 +149,7 @@ function tileHTML(
     samePos(run.ball, { r, c }) && tile.terrain !== "hole"
       ? `<div class="shdw"></div><div class="ball"></div>`
       : "",
-    dir ? `<div class="pl ar" style="--rot:${STEP[dir].rot}deg"><i class="tri"></i></div>` : "",
     `</div>`,
-    // The hit target is its own diamond rather than the tile's box, which
-    // overlaps its neighbours', or the marker's, which is sheared to twice the
-    // tile's width and would steal taps from the tiles either side.
-    dir
-      ? `<button class="hit" type="button" data-dir="${dir}" aria-label="Roll ${dir}"></button>`
-      : "",
   ];
 
   return `<div class="t ${terrainClasses(tile)}" style="--r:${r};--c:${c};--lv:${tile.height}">${parts.join("")}</div>`;

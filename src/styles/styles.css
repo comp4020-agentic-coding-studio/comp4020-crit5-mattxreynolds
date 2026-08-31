@@ -307,14 +307,6 @@ main {
   height: calc(var(--w) * 0.34);
 }
 
-/* Anything standing on a ramp stands halfway up it, not at its foot --- the
-   same half-level the ball animates at. It also carries the marker up and away
-   from the raised ground in front, which was covering it. */
-.sl .fx,
-.sl .hit {
-  top: calc(var(--rmax) - var(--lift) / 2);
-}
-
 .sl-se .top::after { background: linear-gradient(297deg, var(--surface-up), var(--surface)); }
 .sl-nw .top::after { background: linear-gradient(117deg, var(--surface-up), var(--surface)); }
 .sl-sw .top::after { background: linear-gradient(63deg, var(--surface-up), var(--surface)); }
@@ -356,8 +348,6 @@ main {
 }
 
 .armed .pl.ar { display: grid; }
-.armed .t:has(.ar) .top { background: var(--white); }
-.armed .t:has(.ar) .top::after { transform: scale(0.945); }
 
 .tri {
   display: block;
@@ -513,9 +503,12 @@ main {
 
 .gl.arc::after {
   top: auto;
-  right: -9px;
-  bottom: -8px;
-  border-left-color: #7a5a2c;
+  right: -6px;
+  bottom: -11px;
+  border: 0;
+  border-top: 12px solid #7a5a2c;
+  border-right: 8px solid transparent;
+  border-left: 8px solid transparent;
 }
 
 /* --- the end of a run ----------------------------------------------------- */
@@ -662,21 +655,33 @@ main {
   }
 }
 
+/* An arrow and its tap target, placed on the board rather than inside a tile.
+   The square an arrow belongs to may be a gap, or off the edge of the board
+   entirely, and a thing that lives inside a tile cannot be drawn where there
+   isn't one. Same placement formula as .t, minus the depth --- this is the
+   ground plane, which is where an arrow lies. */
+.mk {
+  position: absolute;
+  z-index: calc(var(--r) + var(--c));
+  left: calc((var(--c) - var(--r)) * var(--hw) + var(--hw) * (var(--rows) - 1));
+  top: calc((var(--c) + var(--r)) * var(--hh) - var(--lv) * var(--lift) + var(--head));
+  width: var(--w);
+  height: var(--h);
+  pointer-events: none;
+}
+
 /* The tap target for an offered direction. Its own diamond over the tile's
    ground plane: the tile's box overlaps its neighbours', and the marker is
    sheared to twice the tile's width, so either would steal taps from the tiles
    either side. */
 .hit {
   position: absolute;
-  top: var(--rmax);
-  left: 0;
-  z-index: 3;
-  width: var(--w);
-  height: var(--h);
+  inset: 0;
   border: 0;
   background: transparent;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   cursor: pointer;
+  pointer-events: auto;
 }
 
 /* The board is inert except for its hit targets. Tiles overlap each other's
@@ -686,8 +691,4 @@ main {
    clip-path means it only takes one inside its own diamond. */
 .t {
   pointer-events: none;
-}
-
-.hit {
-  pointer-events: auto;
 }

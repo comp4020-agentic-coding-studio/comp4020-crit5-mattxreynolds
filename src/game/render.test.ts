@@ -1,6 +1,7 @@
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "./levels";
+import { offers } from "./rules";
 import { arm, startRun } from "./state";
 import type { Level } from "./types";
 import { screenHTML } from "./render";
@@ -33,6 +34,7 @@ describe("the board", () => {
   it("shows no direction markers until a card is armed", () => {
     expect(doc.querySelectorAll(".ar").length).toBe(0);
     expect(doc.querySelectorAll(".hit").length).toBe(0);
+    expect(doc.querySelectorAll(".mk").length).toBe(0);
     expect(doc.querySelector(".screen")?.classList.contains("armed")).toBe(false);
   });
 });
@@ -43,15 +45,13 @@ describe("direction markers", () => {
   const doc = dom(screenHTML(arm(startRun(LEVELS), 0)));
 
   const markedTiles = (): Array<{ r: number; c: number }> =>
-    [...doc.querySelectorAll(".t")]
-      .filter((t) => t.querySelector(".hit"))
-      .map((t) => {
-        const style = t.getAttribute("style") ?? "";
-        return {
-          r: Number(/--r:(-?\d+)/.exec(style)?.[1]),
-          c: Number(/--c:(-?\d+)/.exec(style)?.[1]),
-        };
-      });
+    [...doc.querySelectorAll(".mk")].map((m) => {
+      const style = m.getAttribute("style") ?? "";
+      return {
+        r: Number(/--r:(-?\d+)/.exec(style)?.[1]),
+        c: Number(/--c:(-?\d+)/.exec(style)?.[1]),
+      };
+    });
 
   it("sit on the tiles immediately beside the ball", () => {
     // L1: ball at (1,0) on a 3x3 board. South-east, north-east and south-west
@@ -64,19 +64,32 @@ describe("direction markers", () => {
     }
   });
 
-  it("never offers a direction that would move the ball nowhere", () => {
-    // North-west from (1,0) leaves the board immediately, so it is not shown:
-    // a stranger who taps an arrow and sees nothing reads the game as broken.
-    expect(markedTiles()).not.toContainEqual({ r: 1, c: 0 });
-    expect(markedTiles().length).toBe(3);
+  it("draws all four, including the one that leaves the board", () => {
+    // L1's ball is on the left edge, so north-west is off the board entirely.
+    // Its arrow is still drawn, on the square that would be there --- what
+    // happens when it is tapped is the engine's answer, not the renderer's.
+    const at = markedTiles();
+    expect(at.length).toBe(4);
+    expect(at).toContainEqual({ r: 1, c: -1 });
+    expect(at).not.toContainEqual({ r: 1, c: 0 });
   });
 
-  it("gives every offered tile an arrow and a hit target that is a real button", () => {
-    for (const tile of doc.querySelectorAll(".t")) {
-      expect(Boolean(tile.querySelector(".ar"))).toBe(Boolean(tile.querySelector("button.hit")));
+  it("leaves the engine to know which of them actually move the ball", () => {
+    // The renderer shows four; `offers` is still the engine's own account of
+    // which are real moves, and the level tests search over that.
+    const level = LEVELS[0];
+    const real = offers(level, level.ball, level.hand[0]).map((o) => o.dir);
+    expect(real).not.toContain("nw");
+    expect(real.length).toBe(3);
+  });
+
+  it("gives every arrow a hit target that is a real button", () => {
+    for (const marker of doc.querySelectorAll(".mk")) {
+      expect(marker.querySelector(".ar")).toBeTruthy();
+      expect(marker.querySelector("button.hit")).toBeTruthy();
     }
-    expect(doc.querySelectorAll("button.hit").length).toBe(3);
-    expect(doc.querySelectorAll(".ar").length).toBe(3);
+    expect(doc.querySelectorAll("button.hit").length).toBe(4);
+    expect(doc.querySelectorAll(".ar").length).toBe(4);
   });
 
   it("marks the screen armed so the CSS can reveal them", () => {
