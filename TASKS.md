@@ -35,20 +35,6 @@ private. T5 is where that gets discovered, not the morning of the cutoff.
 
 ## Backlog
 
-### T3 — Level format and validator
-
-- `src/game/types.ts` and `src/game/levels.ts` — a level is a grid of tiles
-  (terrain + height, ramps carrying a direction), a ball, a hole, and a hand.
-- `src/game/validate.ts` — enforces the vertex-height rule from `PLAN.md`:
-  height belongs to grid vertices, so a ramp's raised corner must agree with
-  all three tiles sharing it, or the terrain tears visibly.
-
-**Done when:** the validator runs over every shipped level in a test and passes.
-
-**Acceptance:** a deliberately torn level (a ramp corner disagreeing with its
-neighbour) is rejected with a message naming the vertex. Ball and hole must sit
-on real tiles.
-
 ### T4 — Resolver: `move` on flat ground
 
 `src/game/rules.ts` — `resolve(level, from, card, dir)` returning the stepped
@@ -103,6 +89,12 @@ before a higher tile that no ramp serves. (The spec's *focused* test is the
 ramp rule, in T8.)
 
 ### T8 — Resolver: ramps and sand
+
+**Carried from T1's port:** the four `.sl-*` gradient rules in `styles.css`
+put the *light* end at the ramp's raised edge, which inverts the contract's one
+height convention. Only the `.sl.up` override (the combination the slice
+actually rendered) has it the right way round. Fix all four when ramps first
+render from data, and check it on a screenshot rather than by reading the CSS.
 
 **This task carries the spec's one focused automated test.** A ball never comes
 to rest on a ramp: too few steps to clear one going up and it stops at the foot
@@ -210,6 +202,9 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T3 — Level format and validator** — `types.ts`, `levels.ts`, `validate.ts`.
+  Height lives on grid vertices; a vertex is only checked where a ramp touches
+  it, so a cliff stays legal and only a ramp that tears the ground is rejected.
 - **T2 — Evidence gate** — `pnpm check:evidence` exits 0: a real
   `PROCESS.md` citing four commits that resolve, and `reflections/crit-5.md`.
 - **T1 — Page shell and the visual contract in `src/`** — `1e61c99` (port),
