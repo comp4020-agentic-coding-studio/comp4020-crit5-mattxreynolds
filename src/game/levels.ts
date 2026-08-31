@@ -179,11 +179,41 @@ function level8(): Level {
   };
 }
 
+/** L9: the climb and the sand together, and a real edge to fall from.
+ *
+ *  The direct row wastes the first card in the sand, then blocks the second
+ *  dead at a sheer step, so the only way on is south --- onto a spit that
+ *  only exists past that step, not underneath it. Both rows drop straight
+ *  into nothing off their far side: north off the direct row's own edge,
+ *  south off the spit's, the same way an overshoot fell in L8. */
+function level9(): Level {
+  const grid = field(3, 6);
+  grid[0][1] = SAND();
+  grid[0][3] = G(1);
+  grid[1][0] = null;
+  grid[1][1] = null;
+  grid[1][5] = HOLE();
+  for (let c = 0; c < 6; c++) grid[2][c] = null;
+  return {
+    id: 9,
+    grid,
+    ball: { r: 0, c: 0 },
+    hand: [
+      { kind: "move", value: 3 },
+      { kind: "move", value: 1 },
+      { kind: "move", value: 1 },
+      { kind: "move", value: 3 },
+    ],
+  };
+}
+
 /** The curve: move, then distance, then four directions with a wrong one among
  *  them, then a step that blocks, a step that doesn't, the ramp between them,
  *  then the card that ignores all of it, and last a level that wants two of
  *  those ideas together. One new idea per level, and every teaching level is
- *  also a puzzle that can be lost. */
+ *  also a puzzle that can be lost. From L9 on, nothing new is taught --- the
+ *  set combines what came before on bigger boards, with the fall used
+ *  deliberately rather than left as an edge case. */
 export const LEVELS: Level[] = [
   level1(),
   level2(),
@@ -193,6 +223,7 @@ export const LEVELS: Level[] = [
   level6(),
   level7(),
   level8(),
+  level9(),
 ];
 
 export { field, G, HOLE };
