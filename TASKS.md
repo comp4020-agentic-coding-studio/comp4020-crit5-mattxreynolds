@@ -111,6 +111,12 @@ The spec asks for **one change that came from playing the finished game**, not
 from reading its code. Play the deployed build cold, at both viewports, and fix
 the thing that most gets in the way.
 
+Candidates so far, all found by playing rather than by reading — but all found
+before the game was finished, so T13 still needs its own:
+the click-through bug where a tile in front swallowed taps meant for the tile
+behind, the ball hiding the cup it had just gone into, and the failed climb
+that used to hide its own arrow instead of rolling up the slope and back.
+
 **Done when:** the change is committed with a message saying what playing it
 revealed.
 

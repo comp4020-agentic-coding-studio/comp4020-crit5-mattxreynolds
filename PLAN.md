@@ -188,10 +188,12 @@ N steps, and at each step, from the current tile to the next:
 - next is **the hole** → the level is won
 - a **ramp** can be taken in either direction, but **a ball never comes to rest
   on a ramp**:
-  - *going up* — allowed only if the remaining steps are enough to leave the
-    ramp at the top. If they are not, the ball stops at the tile before the
-    ramp, exactly as a climb blocks it. The card is still spent, so failing a
-    climb is a real wrong move.
+  - *going up* — the ball comes to rest past the ramp only if the remaining
+    steps are enough to leave it at the top. If they are not, it still sets
+    off up the slope, runs out of momentum and rolls back down to the tile it
+    started from — so the resolved path is the whole round trip, and the
+    animation shows the failed climb rather than hiding it. The card is still
+    spent, so failing a climb is a real wrong move.
   - *going down* — always allowed. If the steps run out mid-ramp the ball
     keeps rolling to the foot of the ramp and stops there; gravity finishes the
     move at no extra cost.
@@ -203,10 +205,17 @@ ignoring everything between and ignoring height in both directions. It is not
 the only way up — ramps are — but it is the only way onto ground no ramp
 reaches, and the only way over something in the way. If the landing tile is off the board the direction is not offered.
 
-**Only offer a direction that moves the ball.** A direction whose resolved
-landing equals the start tile is not shown. A stranger tapping an arrow and
-seeing nothing happen reads the game as broken. Wrong moves stay possible —
-plenty of legal moves waste a card — so this does not soften "it can be lost".
+**Only offer a direction in which the ball actually does something.** The test
+is whether the ball *moves*, not whether it ends up somewhere new. A stranger
+tapping an arrow and seeing nothing happen reads the game as broken, so a
+direction running straight off the board, or into a sheer step, is not shown.
+
+But a ball that sets off up a ramp and rolls back down **has** moved, and has
+shown exactly why the climb failed — so that direction *is* offered, the arrow
+sits on the slope, and taking it costs the card like any other wrong move.
+Hiding it instead made the rule invisible: the arrow silently vanished and the
+player was left to infer what had happened. Wrong moves stay possible — plenty
+of legal moves waste a card — so none of this softens "it can be lost".
 
 **Markers sit on the tile beside the ball**, one step in each offered
 direction. *This reverses an earlier decision, and the reversal came from

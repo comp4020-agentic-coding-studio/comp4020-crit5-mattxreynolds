@@ -74,6 +74,47 @@ describe("a ball never comes to rest on a ramp", () => {
     expect(isRamp(tileAt(level, result.landing)!)).toBe(false);
   });
 
+  it("going up: rolls onto the ramp and back down, so the failed climb is seen", () => {
+    // The ball does set off up the slope --- it just can't stay there. The
+    // path carries the whole round trip so the animation shows it, rather
+    // than the move being silently refused.
+    const level = board("00/1", 0, move(2));
+    const result = roll(level, "se");
+    expect(result.path).toEqual([
+      { r: 0, c: 0 },
+      { r: 0, c: 1 },
+      { r: 0, c: 2 },
+      { r: 0, c: 1 },
+    ]);
+    expect(result.landing).toEqual({ r: 0, c: 1 });
+  });
+
+  it("going up: rolls back down the whole run of a ramp it cannot clear", () => {
+    const level = board("0//2", 0, move(2));
+    expect(roll(level, "se").path).toEqual([
+      { r: 0, c: 0 },
+      { r: 0, c: 1 },
+      { r: 0, c: 2 },
+      { r: 0, c: 1 },
+      { r: 0, c: 0 },
+    ]);
+  });
+
+  it("offers the failed climb, so the arrow shows on the slope and can be taken", () => {
+    // It is a wrong move, not an impossible one: the ball moves, visibly, and
+    // the card is spent for it.
+    const level = board("0/1", 0, move(1));
+    const dirs = offers(level, level.ball, level.hand[0]).map((o) => o.dir);
+    expect(dirs).toContain("se");
+  });
+
+  it("still refuses a direction where nothing moves at all", () => {
+    // A sheer step is not a slope: there is no roll to show, so the arrow
+    // stays off. Same for a direction straight off the board.
+    const level = board("01", 0, move(2));
+    expect(offers(level, level.ball, level.hand[0]).map((o) => o.dir)).toEqual([]);
+  });
+
   it("going down: rolls on to the bottom when the steps run out mid-ramp", () => {
     // One step puts the ball on the ramp; gravity finishes the move for free.
     const level = board("1\\0", 0, move(1));

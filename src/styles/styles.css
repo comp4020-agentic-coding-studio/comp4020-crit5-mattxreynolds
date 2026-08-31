@@ -272,6 +272,14 @@ main {
 .sl-sw { --rw: var(--lift); --rs: var(--lift); }
 .sl-ne { --rn: var(--lift); --re: var(--lift); }
 
+/* Anything standing on a ramp stands halfway up it, not at its foot --- the
+   same half-level the ball animates at. It also carries the marker up and away
+   from the raised ground in front, which was covering it. */
+.sl .fx,
+.sl .hit {
+  top: calc(var(--rmax) - var(--lift) / 2);
+}
+
 .sl-se .top::after { background: linear-gradient(297deg, var(--surface-up), var(--surface)); }
 .sl-nw .top::after { background: linear-gradient(117deg, var(--surface-up), var(--surface)); }
 .sl-sw .top::after { background: linear-gradient(63deg, var(--surface-up), var(--surface)); }

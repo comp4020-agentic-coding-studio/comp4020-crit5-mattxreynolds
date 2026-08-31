@@ -2,7 +2,7 @@ import { LEVELS } from "../game/levels";
 import { screenHTML } from "../game/render";
 import { resolve } from "../game/rules";
 import { type Run, arm, currentLevel, playCard, restart, startRun } from "../game/state";
-import type { Dir, Pos } from "../game/types";
+import { type Dir, type Pos, isRamp } from "../game/types";
 
 // Wiring: events in, render out. Everything it decides, it asks the engine.
 
@@ -100,7 +100,15 @@ function start(root: HTMLElement): void {
     if (shadow) lift(board, shadow, 0.3, 900);
 
     const level = currentLevel(run);
-    const heightAt = (p: Pos): number => level.grid[p.r]?.[p.c]?.height ?? 0;
+
+    /** Where the ball sits, vertically, standing on this tile. A ramp is half
+     *  a level: the ball is on the slope, not at either end of it. */
+    const heightAt = (p: Pos): number => {
+      const tile = level.grid[p.r]?.[p.c];
+      if (!tile) return 0;
+      return tile.height + (isRamp(tile) ? 0.5 : 0);
+    };
+
     const centre = (p: Pos): { x: number; y: number } => ({
       x: (p.c - p.r) * (w / 2),
       y: (p.c + p.r) * (w / 4) - heightAt(p) * (w * 0.3),
@@ -112,11 +120,23 @@ function start(root: HTMLElement): void {
       return { dx: at.x - from.x, dy: at.y - from.y };
     });
 
+    // Gravity, in the easing: the ball slows as it climbs and gathers speed as
+    // it drops. On a failed climb --- up the ramp and back down again --- that
+    // is the whole of what makes it read as running out of momentum rather
+    // than changing its mind.
+    const heights = path.map(heightAt);
     const frames = (base: string): Keyframe[] =>
-      offsets.map(({ dx, dy }) => ({ transform: `translate(${dx}px, ${dy}px) ${base}` }));
+      offsets.map(({ dx, dy }, i) => {
+        const frame: Keyframe = { transform: `translate(${dx}px, ${dy}px) ${base}` };
+        if (i < heights.length - 1) {
+          const rise = heights[i + 1] - heights[i];
+          frame.easing = rise > 0 ? "ease-out" : rise < 0 ? "ease-in" : "linear";
+        }
+        return frame;
+      });
+
     const timing: KeyframeAnimationOptions = {
       duration: STEP_MS * (path.length - 1),
-      easing: "linear",
       fill: "forwards",
     };
 

@@ -8,7 +8,6 @@ import {
   type Tile,
   isRamp,
   opposite,
-  samePos,
   step,
   tileAt,
 } from "./types";
@@ -88,13 +87,22 @@ function settle(level: Level, path: Pos[], dir: Dir): Move {
     return { path, landing: at, outcome: "stopped" };
   }
 
-  // Climbing: unwind the whole run of ramp tiles it had started up.
-  while (path.length > 1) {
-    const last = tileAt(level, path[path.length - 1]);
-    if (!last || !isRamp(last)) break;
-    path.pop();
+  // Climbing without the steps to clear it. The ball does set off up the ramp
+  // --- it just can't stay there, so it runs out of momentum and rolls back
+  // down to the tile it started up from. The path carries the whole round
+  // trip, so the animation shows the failed climb rather than hiding it, and
+  // the card is spent all the same: a failed climb is a real wrong move.
+  let climbed = 0;
+  for (let i = path.length - 1; i >= 0; i--) {
+    const tried = tileAt(level, path[i]);
+    if (!tried || !isRamp(tried)) break;
+    climbed += 1;
   }
-  return { path, landing: path[path.length - 1], outcome: "stopped" };
+
+  const top = path.length - 1;
+  const foot = Math.max(top - climbed, 0);
+  for (let i = top - 1; i >= foot; i--) path.push(path[i]);
+  return { path, landing: path[foot], outcome: "stopped" };
 }
 
 /** Can a ball travelling in `dir` step from `here` onto `next`?
@@ -132,16 +140,18 @@ function isHole(tile: Tile): boolean {
   return tile.terrain === "hole";
 }
 
-/** The moves worth offering from `from` with `card` --- one per direction that
- *  actually takes the ball somewhere.
+/** The moves worth offering from `from` with `card` --- one per direction in
+ *  which the ball actually does something.
  *
- *  A direction whose landing is the start tile is left out on purpose: a
- *  stranger who taps an arrow and sees nothing happen reads the game as
- *  broken. Wrong moves stay possible --- plenty of legal moves waste a card
- *  --- so this doesn't soften the fact that a level can be lost. */
+ *  The test is whether the ball *moves*, not whether it ends up somewhere new.
+ *  A direction that runs straight off the board, or into a sheer step, is left
+ *  out: a stranger who taps an arrow and sees nothing happen reads the game as
+ *  broken. But a ball that sets off up a ramp and rolls back down has moved,
+ *  visibly, and shown exactly why the climb failed --- so that one is offered,
+ *  and it costs the card like any other wrong move. */
 export function offers(level: Level, from: Pos, card: Card): Array<{ dir: Dir; move: Move }> {
   return DIRS.flatMap((dir) => {
     const move = resolve(level, from, card, dir);
-    return samePos(move.landing, from) ? [] : [{ dir, move }];
+    return move.path.length > 1 ? [{ dir, move }] : [];
   });
 }
