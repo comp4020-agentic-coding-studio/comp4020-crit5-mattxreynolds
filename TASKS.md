@@ -35,21 +35,6 @@ private. T5 is where that gets discovered, not the morning of the cutoff.
 
 ## Backlog
 
-### T2 — Evidence gate *(independent)*
-
-`pnpm check:evidence` currently fails four ways and it **gates `deploy`**, so
-nothing ships until it passes. This is why it sits at T2 and not at the end.
-
-- Replace `PROCESS.md`'s template boilerplate with a real overview, citing
-  commits that exist (`33d689b`, `acea345`, `cfcd83f` are the design decisions,
-  including the isometric reversal and both critique passes).
-- Create `reflections/crit-5.md` at the exact path the checker names.
-
-**Done when:** `pnpm check:evidence` exits 0.
-
-**Acceptance:** every cited SHA resolves via `git cat-file -e`. No placeholder
-SHAs. The reflection is honest about the height-scope reversal and its cost.
-
 ### T3 — Level format and validator
 
 - `src/game/types.ts` and `src/game/levels.ts` — a level is a grid of tiles
@@ -213,13 +198,20 @@ be done early — it needs the finished game.
 
 ## Polish
 
-*(populated by review against the spec once the backlog is built, per the
-`working-loop` convention — not specified in advance)*
+- **Revisit `PROCESS.md` and `reflections/crit-5.md` at the end.** Both were
+  written at T2 because `check:evidence` gates `deploy`, so they cover the
+  design phase and nothing after it. The moment that comes out of T13 —
+  playing the finished game — is the one most likely to be worth citing, and
+  it doesn't exist yet.
+- *(the rest populated by review against the spec once the backlog is built,
+  per the `working-loop` convention — not specified in advance)*
 
 ---
 
 ## Done
 
+- **T2 — Evidence gate** — `pnpm check:evidence` exits 0: a real
+  `PROCESS.md` citing four commits that resolve, and `reflections/crit-5.md`.
 - **T1 — Page shell and the visual contract in `src/`** — `1e61c99` (port),
   `6f6e72d` (tests, committed red). The slice's geometry and palette moved
   across unchanged; board sizing now derives from the level's own `--cols`
