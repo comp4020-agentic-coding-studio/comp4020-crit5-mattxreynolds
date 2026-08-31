@@ -49,21 +49,6 @@ skipped run still exits 0 under `gh run watch`, so check the run's conclusion,
 not the exit code). Links check and secrets scan pass, both of which have never
 executed on this repo. A stranger can finish L1 without being told anything.
 
-### T9 — Resolver: `jump` *(first thing to cut if the schedule slips)*
-
-Lands exactly N away, ignores everything between, ignores height in both
-directions. Reaches ground no ramp serves.
-
-Ramps being climbable means `jump` is no longer the ordinary way up, so it now
-has to earn a second traversal algorithm and a second wordless glyph. If T1–T8
-run late, cut this before cutting levels — see `PLAN.md`'s risk list.
-
-**Done when:** unit tests cover jumping over a raised block, up onto one, and
-off the board (not offered).
-
-**Acceptance:** the card's jump mark is visually distinct from the move mark,
-per the contract's glyph rule. If cut, no level in T10 may require it.
-
 ### T10 — The level set, and a solvability test
 
 Grow to 6–8 levels along the teaching curve: move → distance → a sheer step
@@ -171,6 +156,11 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T9 — Resolver: `jump`** — lands exactly N away over whatever lies between,
+  ignoring height at both ends; not offered when there is nowhere to arrive,
+  and it rolls to the foot if it lands on a slope, so "never rests on a ramp"
+  holds for the whole game rather than only for `move`. Not cut, so T10 may
+  use it.
 - **T8 — Resolver: ramps and sand** — carries the spec's focused test, *a ball
   never comes to rest on a ramp*, both halves plus a property assertion over
   every shipped level. Ramps and height now render from data (L4 the sheer

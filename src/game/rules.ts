@@ -22,7 +22,7 @@ export function resolve(level: Level, from: Pos, card: Card, dir: Dir): Move {
     case "move":
       return resolveMove(level, from, card.value, dir);
     case "jump":
-      throw new Error("jump is not implemented yet (T9)");
+      return resolveJump(level, from, card.value, dir);
   }
 }
 
@@ -54,6 +54,33 @@ function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
   }
 
   return settle(level, path, dir);
+}
+
+/** A `jump` card of value N puts the ball exactly N tiles away in one
+ *  direction, over whatever lies between and regardless of height at either
+ *  end. Ramps are the ordinary way up; this is how the ball reaches ground no
+ *  ramp serves, and how it clears what a roll would stop at.
+ *
+ *  There is nowhere to arrive if the landing tile isn't there, so the move
+ *  simply doesn't happen and the direction isn't offered. */
+function resolveJump(level: Level, from: Pos, value: number, dir: Dir): Move {
+  let landing = from;
+  for (let n = 0; n < value; n++) landing = step(landing, dir);
+
+  const tile = tileAt(level, landing);
+  if (!tile) return { path: [from], landing: from, outcome: "stopped" };
+
+  // Only the two ends: nothing happens in between, and the animation should
+  // carry the ball over rather than through.
+  const path = [from, landing];
+  if (tile.terrain === "hole") return { path, landing, outcome: "holed" };
+
+  // Landing on a slope is still not resting on one. The ball takes the fall
+  // line down to the foot, exactly as a roll does when its steps run out on a
+  // ramp --- settle() already knows how, given the direction of the fall.
+  if (isRamp(tile)) return settle(level, path, opposite(tile.ramp as Dir));
+
+  return { path, landing, outcome: "stopped" };
 }
 
 /** A ball never comes to rest on a ramp. Where the steps ran out decides which

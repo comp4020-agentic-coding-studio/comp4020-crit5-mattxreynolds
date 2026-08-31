@@ -2,6 +2,7 @@ import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "./levels";
 import { arm, startRun } from "./state";
+import type { Level } from "./types";
 import { screenHTML } from "./render";
 
 // render.ts is the only file that knows tiles are HTML, and it is a pure
@@ -80,6 +81,34 @@ describe("direction markers", () => {
 
   it("marks the screen armed so the CSS can reveal them", () => {
     expect(doc.querySelector(".screen")?.classList.contains("armed")).toBe(true);
+  });
+});
+
+describe("the two card types", () => {
+  // The contract allows three glyphs in the whole game: numerals, the card's
+  // move/jump mark, and the restart arrow. A move and a jump have to be
+  // tellable apart on sight, with no word to say which is which.
+  const level: Level = {
+    id: 1,
+    grid: [[{ terrain: "ground", height: 0 }, { terrain: "hole", height: 0 }]],
+    ball: { r: 0, c: 0 },
+    hand: [
+      { kind: "move", value: 1 },
+      { kind: "jump", value: 1 },
+    ],
+  };
+  const doc = dom(screenHTML(startRun([level])));
+  const marks = [...doc.querySelectorAll(".hand .c .gl")];
+
+  it("gives a move card the shaft mark and a jump card the arc", () => {
+    expect(marks.length).toBe(2);
+    expect(marks[0].classList.contains("arc")).toBe(false);
+    expect(marks[1].classList.contains("arc")).toBe(true);
+  });
+
+  it("tells them apart by the mark alone, not by any word", () => {
+    const text = doc.querySelector(".hand")?.textContent?.replace(/\s+/g, "") ?? "";
+    expect(text).toBe("11");
   });
 });
 
