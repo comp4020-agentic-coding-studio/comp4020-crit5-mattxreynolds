@@ -100,6 +100,43 @@ main {
   place-items: center;
 }
 
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* The live restart tally --- same ink-not-orange reading as .score, shrunk to
+   sit next to the level circle during play instead of after it. */
+.tally {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tally-mark {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+}
+
+.tally-mark svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #6b7a66;
+  stroke-linecap: round;
+  stroke-width: 2.4;
+}
+
+.tally-num {
+  color: #54634e;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .stage {
   position: relative;
   display: grid;
@@ -644,6 +681,8 @@ main {
   .lvl,
   .redo.sm { width: 44px; height: 44px; }
   .redo { width: 60px; height: 60px; }
+  .tally-mark { width: 18px; height: 18px; }
+  .tally-num { font-size: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

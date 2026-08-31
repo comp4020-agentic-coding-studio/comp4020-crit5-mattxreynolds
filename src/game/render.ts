@@ -45,13 +45,22 @@ export function screenHTML(run: Run): string {
   ].join("");
 }
 
-/** Level number left, restart right --- one restart, one place, every state.
- *  On the ending screen there is no current level to number, and the restart
- *  starts the whole run again rather than the last level of it. */
+/** Level number and running restart tally left, restart button right --- one
+ *  restart, one place, every state. On the ending screen there is no current
+ *  level to number and the score already has its own big reveal, so both
+ *  sides of `left` are skipped there; the restart starts the whole run again
+ *  rather than the last level of it. */
 function gutter(run: Run, level: boolean, label: string): string {
+  const left = level
+    ? [
+        `<div class="lvl">${run.index + 1}</div>`,
+        `<span class="tally"><span class="tally-mark" aria-hidden="true">${RESTART_ICON}</span>`,
+        `<span class="tally-num">${run.restarts}</span></span>`,
+      ].join("")
+    : "";
   return [
     `<div class="top-bar">`,
-    level ? `<div class="lvl">${run.index + 1}</div>` : `<div></div>`,
+    `<div class="left">${left}</div>`,
     `<button class="redo sm" type="button" data-act="restart" aria-label="${label}">${RESTART_ICON}</button>`,
     `</div>`,
   ].join("");
