@@ -128,6 +128,22 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **Falling edges, four combined levels, a live restart counter** — `0f24917`/
+  `0982824` make the edge a fall rather than a wall (`"fell"` joins
+  `Outcome`; the card is still spent, and `solve()`/`losable()` treat it as a
+  dead end, not a position to keep exploring from); `3e46a3b` animates it,
+  drifting further and fading longer than a hole's `sink()`, since this is
+  gone rather than in; `06056aa` puts `run.restarts` next to the level number
+  during play, not only on the finish screen. `b441ba7`, `de3358a`,
+  `39f428c`, `fc1cfc5` add L9–L12, combining what L1–L8 taught one at a time
+  on bigger boards, each using the fall as a real hazard rather than an edge
+  case: L9 climb + sand + a spit with open air beside it; L10 ramp + jump,
+  the ramp serving only part of the route; L11 sand vs. jump changing the
+  ball's effective range so card order decides a fall; L12 the finale, where
+  the arc card can clear the ramp *or* the gap but not both, and every
+  overshoot short of the gap lands safely in sand instead of falling. Full
+  suite green (150 tests), played at `?level=N` for each, both a win and a
+  loss, before moving to the next.
 - **T11 — Ending screen and the run score** — finishing the last level reaches
   its own screen: the goal at size, and the run's restart count as the score.
   Wordless. The gutter restart becomes play-again, and the score reads 0 on a

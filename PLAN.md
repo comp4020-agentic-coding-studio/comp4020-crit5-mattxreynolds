@@ -100,7 +100,8 @@ Ramps therefore span a whole boundary or are bounded by a level change. This was
 found by rendering an invalid level, not by reasoning — see
 `docs/design/ramp-check.html`.
 
-Target: **6–8 levels** and a real ending screen. *Shipped: eight.* The binding spec line is that
+Target: **6–8 levels** and a real ending screen. *Shipped: twelve — eight teaching
+one mechanic each, four combining them on bigger boards.* The binding spec line is that
 a stranger reaches an ending inside five minutes, so the level count is a cap,
 not a floor, and the opening curve should be close to insultingly gentle.
 
