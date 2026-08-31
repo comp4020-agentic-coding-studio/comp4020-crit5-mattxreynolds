@@ -296,8 +296,12 @@ main {
   clip-path: polygon(0% 33%, 57% 33%, 57% 0%, 100% 50%, 57% 100%, 57% 67%, 0% 67%);
 }
 
+/* Above the ball and the direction marker both: the ball drops behind the rim
+   when it goes in, and an arrow whose landing tile is the hole should read as
+   running into the cup rather than over it. */
 .cup {
   position: absolute;
+  z-index: 1;
   top: 50%;
   left: 50%;
   width: calc(var(--w) * 0.4);
@@ -535,4 +539,34 @@ main {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+/* The tap target for an offered direction. Its own diamond over the tile's
+   ground plane: the tile's box overlaps its neighbours', and the marker is
+   sheared to twice the tile's width, so either would steal taps from the tiles
+   either side. */
+.hit {
+  position: absolute;
+  top: var(--rmax);
+  left: 0;
+  z-index: 3;
+  width: var(--w);
+  height: var(--h);
+  border: 0;
+  background: transparent;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  cursor: pointer;
+}
+
+/* The board is inert except for its hit targets. Tiles overlap each other's
+   boxes heavily --- a tile in front covers the one behind at exactly the point
+   you would tap it --- and a transparent box still swallows a click, so an
+   offered tile two rows back was unclickable. Only .hit takes a tap, and its
+   clip-path means it only takes one inside its own diamond. */
+.t {
+  pointer-events: none;
+}
+
+.hit {
+  pointer-events: auto;
 }

@@ -1,10 +1,12 @@
 import {
+  DIRS,
   type Card,
   type Dir,
   type Level,
   type Move,
   type Pos,
   type Tile,
+  samePos,
   step,
   tileAt,
 } from "./types";
@@ -48,4 +50,18 @@ function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
 
 function isHole(tile: Tile): boolean {
   return tile.terrain === "hole";
+}
+
+/** The moves worth offering from `from` with `card` --- one per direction that
+ *  actually takes the ball somewhere.
+ *
+ *  A direction whose landing is the start tile is left out on purpose: a
+ *  stranger who taps an arrow and sees nothing happen reads the game as
+ *  broken. Wrong moves stay possible --- plenty of legal moves waste a card
+ *  --- so this doesn't soften the fact that a level can be lost. */
+export function offers(level: Level, from: Pos, card: Card): Array<{ dir: Dir; move: Move }> {
+  return DIRS.flatMap((dir) => {
+    const move = resolve(level, from, card, dir);
+    return samePos(move.landing, from) ? [] : [{ dir, move }];
+  });
 }

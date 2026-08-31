@@ -24,7 +24,7 @@ describe("the page shell", () => {
       const el = doc.querySelector(selector);
       expect(el, `${selector} is missing`).toBeTruthy();
       expect(
-        el?.classList.contains("vh"),
+        Boolean(el?.closest(".vh")),
         `${selector} is visible on the page; the game shows no prose`,
       ).toBe(true);
     }

@@ -35,23 +35,6 @@ private. T5 is where that gets discovered, not the morning of the cutoff.
 
 ## Backlog
 
-### T5 — Wiring, render, and the landing-tile markers
-
-- `src/game/state.ts` (run state) and `src/game/render.ts` (state → DOM).
-- Tap a card → arm → markers appear **on the landing tile** the resolver
-  reports, not the adjacent tile. Directions whose landing equals the start are
-  not offered.
-- Tap a marker → ball animates the path → card is spent.
-- Hand spent without holing out → lost state; restart returns the level and
-  increments the run's restart count.
-
-**Done when:** a full level can be played, won, and lost in a browser at both
-viewports.
-
-**Acceptance:** the marker for a card reading `2` sits two tiles from the ball —
-this is the critic's open finding, and it is what makes the numeral teach
-itself. One restart control, in the gutter, in every state.
-
 ### T6 — Three flat levels, then ship
 
 Three `move`-only levels: L1 is the ball, the hole two tiles away, one card.
@@ -131,6 +114,10 @@ consequence a stranger can see.
 
 ### T11 — Ending screen and the run score
 
+**Carried from T5:** `finished` currently falls through to the lost screen's
+markup without the dim. It needs its own treatment, or a win and a loss look
+alike.
+
 Finishing the last level ends the run, showing the total restart count.
 Wordless: numerals and icons only.
 
@@ -184,6 +171,16 @@ be done early — it needs the finished game.
   design phase and nothing after it. The moment that comes out of T13 —
   playing the finished game — is the one most likely to be worth citing, and
   it doesn't exist yet.
+- **Composition differs between the two viewports.** Now visible in the real
+  game, not just the slice: desktop leaves a large dead field around a small
+  board, and on the phone the board sits high with the field empty below it.
+  This is the design critic's third open finding in `PLAN.md`, and it needs
+  different treatments per viewport rather than one shared cap.
+- **L1 teaches the numeral only in one direction.** The ball starts at the
+  board's edge, so two of the three offered directions land one tile away
+  (stopped by the rim) while the card reads `2`. Correct, and it teaches the
+  edge rule — but it works against the numeral teaching itself on the very
+  first screen. Worth reshaping when T10 revisits the curve.
 - *(the rest populated by review against the spec once the backlog is built,
   per the `working-loop` convention — not specified in advance)*
 
@@ -191,6 +188,10 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T5 — Wiring, render and the landing-tile markers** — one renderer shared
+  by the Astro build and the browser, so the page ships a real board rather
+  than an empty div. Markers sit on the resolver's landing tile; the roll is
+  animated; win, loss and restart all work at both viewports.
 - **T4 — Resolver: `move` on flat ground** — `resolve()` returns the whole
   stepped path, the landing and the outcome. Pure; a no-op direction resolves
   to the start tile rather than erroring, so T5 can decline to offer it.

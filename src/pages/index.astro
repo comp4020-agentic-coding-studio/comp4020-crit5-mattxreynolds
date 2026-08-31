@@ -1,26 +1,13 @@
 ---
 import "../styles/styles.css";
+import { LEVELS } from "../game/levels";
+import { screenHTML } from "../game/render";
+import { startRun } from "../game/state";
 
-// T1 renders level 1 statically, from a literal that mirrors the shape the
-// level format will take in T3 and the DOM `render.ts` will emit in T5. When
-// the engine lands, this frontmatter goes and the same markup comes from
-// there --- the CSS does not change.
-const cols = 3;
-const rows = 3;
-const ball = { r: 1, c: 0 };
-const hole = { r: 1, c: 2 };
-
-// The tile knob --w follows from the board's shape; see styles.css.
-const fx = 2 / (cols + rows);
-const fy = 1 / ((cols + rows - 2) / 4 + 0.8);
-
-const tiles = Array.from({ length: rows * cols }, (_, i) => ({
-  r: Math.floor(i / cols),
-  c: i % cols,
-}));
-
-const at = (t: { r: number; c: number }, p: { r: number; c: number }) =>
-  t.r === p.r && t.c === p.c;
+// The board that ships in the HTML comes from the same renderer the browser
+// uses, so the page is never an empty div waiting on JavaScript and the two
+// can't drift apart.
+const opening = screenHTML(startRun(LEVELS));
 ---
 
 <!doctype html>
@@ -51,55 +38,13 @@ const at = (t: { r: number; c: number }, p: { r: number; c: number }) =>
     />
   </head>
   <body>
-    <header>
-      <nav aria-label="Primary" class="vh">
+    <header class="vh">
+      <h1>Card Golf</h1>
+      <nav aria-label="Primary">
         <a href="./">Card Golf</a>
       </nav>
     </header>
-    <main>
-      <h1 class="vh">Card Golf</h1>
-      <section class="screen" data-state="play">
-        <div class="top-bar">
-          <div class="lvl">1</div>
-          <button class="redo sm" type="button" aria-label="Restart level">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 11a8 8 0 1 0-2.3 5.7"></path>
-              <path d="M20 4v6h-6"></path>
-            </svg>
-          </button>
-        </div>
-
-        <div class="stage">
-          <div
-            class="board"
-            style={`--cols:${cols};--rows:${rows};--fx:${fx.toFixed(5)};--fy:${fy.toFixed(5)}`}
-          >
-            {
-              tiles.map((t) => (
-                <div class="t gr" style={`--r:${t.r};--c:${t.c};--lv:0`}>
-                  <div class="fl" />
-                  <div class="fr" />
-                  <div class="top" />
-                  <div class="fx">
-                    {at(t, hole) && <div class="cup" />}
-                    {at(t, hole) && <div class="flag" />}
-                    {at(t, ball) && <div class="shdw" />}
-                    {at(t, ball) && <div class="ball" />}
-                  </div>
-                </div>
-              ))
-            }
-          </div>
-        </div>
-
-        <div class="hand">
-          <button class="c" type="button" aria-label="Play card 2">
-            <div class="num">2</div>
-            <div class="gl"></div>
-          </button>
-        </div>
-      </section>
-    </main>
+    <main id="game" set:html={opening}></main>
     <script src="../scripts/main.ts"></script>
   </body>
 </html>

@@ -31,6 +31,7 @@ describe("the board", () => {
 
   it("shows no direction markers until a card is armed", () => {
     expect(doc.querySelectorAll(".ar").length).toBe(0);
+    expect(doc.querySelectorAll(".hit").length).toBe(0);
     expect(doc.querySelector(".screen")?.classList.contains("armed")).toBe(false);
   });
 });
@@ -42,7 +43,8 @@ describe("direction markers", () => {
   const doc = dom(screenHTML(arm(startRun(LEVELS), 0)));
 
   it("appear on the tile the ball would actually land on", () => {
-    const marked = [...doc.querySelectorAll(".t")].filter((t) => t.querySelector(".ar"));
+    // Offered tiles, not arrows: the hole is offered without one.
+    const marked = [...doc.querySelectorAll(".t")].filter((t) => t.querySelector(".hit"));
     const at = marked.map((t) => {
       const style = t.getAttribute("style") ?? "";
       return {
@@ -61,7 +63,7 @@ describe("direction markers", () => {
   });
 
   it("never offers a direction that would move the ball nowhere", () => {
-    const marked = [...doc.querySelectorAll(".t")].filter((t) => t.querySelector(".ar"));
+    const marked = [...doc.querySelectorAll(".t")].filter((t) => t.querySelector(".hit"));
     for (const tile of marked) {
       const style = tile.getAttribute("style") ?? "";
       const r = Number(/--r:(-?\d+)/.exec(style)?.[1]);
@@ -70,12 +72,15 @@ describe("direction markers", () => {
     }
   });
 
-  it("gives every marked tile a hit target that is a real button", () => {
+  it("gives every offered tile a hit target that is a real button", () => {
+    // Every arrow has a hit target; the hole is offered with a hit target and
+    // no arrow, because the cup and flag already fill that tile.
     for (const tile of doc.querySelectorAll(".t")) {
-      const marked = tile.querySelector(".ar");
-      const hit = tile.querySelector("button.hit");
-      expect(Boolean(marked)).toBe(Boolean(hit));
+      if (tile.querySelector(".ar")) expect(tile.querySelector("button.hit")).toBeTruthy();
     }
+    const hits = doc.querySelectorAll("button.hit");
+    expect(hits.length).toBe(3);
+    expect(doc.querySelectorAll(".ar").length).toBe(2);
   });
 
   it("marks the screen armed so the CSS can reveal them", () => {
