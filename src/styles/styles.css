@@ -1,16 +1,538 @@
-body {
+/* Ported from docs/design/iso-slice.html, the rendered slice that PLAN.md's
+   visual contract was validated against over two critiques. The tile geometry,
+   palette and card treatment are that file's, unchanged; what is new here is
+   the board-sizing formula, which the slice hard-coded per level shape and
+   which now derives from --cols/--rows so any level sizes itself. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
-  padding: 2rem;
-  font-family: system-ui, sans-serif;
-  line-height: 1.6;
-  color: #1a1a1a;
+  padding: 0;
+}
+
+:root {
+  /* palette --- higher ground is always darker, one convention everywhere */
+  --ink: #3c4a38;
+  --card: #dfa561;
+  --red: #d64a3c;
+  --white: #fdfdfa;
+
+  /* spacing scale */
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 40px;
+  --s6: 48px;
+
+  /* card width is independent of the board's tile-width knob (--w) */
+  --cw: clamp(64px, 8.6vmin, 112px);
+
+  /* board sizing budget: the field left over once gutters and hand are paid
+     for. Overridden at the phone viewport. */
+  --pad-x: 96px;
+  --pad-y: 320px;
+  --w-max: 260px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: Nunito, system-ui, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, #e6f1e8 0%, #eef2e6 46%, #f8f2e6 100%);
+}
+
+/* The game carries no words, but the page still needs a heading and a
+   navigation landmark. Both are for assistive tech only. */
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 main {
-  max-width: 40rem;
-  margin: 0 auto;
+  height: 100%;
 }
 
-a {
-  color: #0b5fff;
+.screen {
+  position: relative;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s6);
+  padding: var(--s3) var(--s2) var(--s2);
+}
+
+/* The bar pins to the viewport gutters, so its relation to the board no longer
+   inverts between a 3x3 level and a 5x4 one. */
+.top-bar {
+  position: absolute;
+  top: var(--s3);
+  right: var(--s3);
+  left: var(--s3);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lvl {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  color: #54634e;
+  font-size: 24px;
+  font-weight: 900;
+  place-items: center;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  width: 100%;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+/* --- board -------------------------------------------------------------- */
+
+/* --fx and --fy are reciprocals of the board's own aspect terms, set per level
+   so the tile knob --w follows from the level's shape:
+     fx = 2 / (cols + rows)
+     fy = 1 / ((cols + rows - 2) / 4 + 0.80)
+   Reciprocals rather than divisors because multiplying by a number is the
+   oldest, least surprising thing calc() can do. */
+.board {
+  position: relative;
+  --w: min(
+    calc((100vw - var(--pad-x)) * var(--fx)),
+    calc((100vh - var(--pad-y)) * var(--fy)),
+    var(--w-max)
+  );
+  --lift: calc(var(--w) * 0.3);
+  --hw: calc(var(--w) / 2);
+  --h: calc(var(--w) / 2);
+  --hh: calc(var(--w) / 4);
+  --d: calc(var(--w) * 0.13);
+  --rise: calc(var(--w) * 0.17);
+  width: calc(var(--w) * (var(--cols) + var(--rows)) / 2);
+  height: calc(var(--hh) * (var(--cols) + var(--rows) - 2) + var(--h) + var(--d));
+  filter: drop-shadow(0 18px 26px rgba(70, 90, 66, 0.2));
+  transition: opacity 0.3s;
+}
+
+/* you must still be able to read the position you lost from */
+.board.dim {
+  opacity: 0.6;
+}
+
+.t {
+  position: absolute;
+  z-index: calc(var(--r) + var(--c));
+  --lv: 0;
+  --dd: calc(var(--d) + var(--lv) * var(--lift));
+  --rn: 0px;
+  --re: 0px;
+  --rs: 0px;
+  --rw: 0px;
+  --rmax: 0px;
+  left: calc((var(--c) - var(--r)) * var(--hw) + var(--hw) * (var(--rows) - 1));
+  top: calc((var(--c) + var(--r)) * var(--hh) - (var(--dd) - var(--d)) - var(--rmax));
+  width: var(--w);
+  height: calc(var(--h) + var(--dd) + var(--rmax));
+  --yN: calc(var(--rmax) - var(--rn));
+  --yE: calc(var(--hh) + var(--rmax) - var(--re));
+  --yS: calc(var(--h) + var(--rmax) - var(--rs));
+  --yW: calc(var(--hh) + var(--rmax) - var(--rw));
+  --yEb: calc(var(--hh) + var(--rmax) + var(--dd));
+  --yWb: calc(var(--hh) + var(--rmax) + var(--dd));
+  --ySb: calc(var(--h) + var(--rmax) + var(--dd));
+  --tl: min(var(--yW), var(--yS));
+  --tr: min(var(--yS), var(--yE));
+  --poly: polygon(50% var(--yN), 100% var(--yE), 50% var(--yS), 0 var(--yW));
+}
+
+.top,
+.fl,
+.fr,
+.fx {
+  position: absolute;
+}
+
+.top {
+  top: 0;
+  left: 0;
+  width: var(--w);
+  height: calc(var(--h) + var(--rmax));
+  clip-path: var(--poly);
+}
+
+/* the seam: the top face's own colour showing through as a hairline edge */
+.top::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--poly);
+  transform: scale(0.962);
+}
+
+.fl {
+  top: var(--tl);
+  left: 0;
+  width: var(--hw);
+  height: calc(var(--ySb) - var(--tl));
+  clip-path: polygon(
+    0 calc(var(--yW) - var(--tl)),
+    100% calc(var(--yS) - var(--tl)),
+    100% calc(var(--ySb) - var(--tl)),
+    0 calc(var(--yWb) - var(--tl))
+  );
+}
+
+.fr {
+  top: var(--tr);
+  left: var(--hw);
+  width: var(--hw);
+  height: calc(var(--ySb) - var(--tr));
+  clip-path: polygon(
+    0 calc(var(--yS) - var(--tr)),
+    100% calc(var(--yE) - var(--tr)),
+    100% calc(var(--yEb) - var(--tr)),
+    0 calc(var(--ySb) - var(--tr))
+  );
+}
+
+/* the ground plane of a tile: everything standing on the tile lives in here */
+.fx {
+  top: var(--rmax);
+  left: 0;
+  z-index: 2;
+  width: var(--w);
+  height: var(--h);
+}
+
+/* ONE height convention everywhere: higher ground is darker. */
+.gr .top { background: #a3bb98; }
+.gr .top::after { background: #b6ccab; }
+.gr .fl { background: #94ac8a; }
+.gr .fr { background: #84997a; }
+
+.up .top { background: #7b9670; }
+.up .top::after { background: #8ba580; }
+.up .fl { background: #6e8664; }
+.up .fr { background: #5e7556; }
+
+.sd .top { background: #dbc899; }
+.sd .top::after {
+  background: #eddcae radial-gradient(circle, rgba(180, 150, 90, 0.5) 1.4px, transparent 1.8px) 0 0 /
+    10px 10px;
+}
+.sd .fl { background: #cbb98b; }
+.sd .fr { background: #b9a67b; }
+
+/* ramps: one raised edge, the gradient reading as the tilted plane */
+.sl { --rmax: var(--rise); }
+.sl .top { background: #9db492; }
+.sl .fl { background: #94ac8a; }
+.sl .fr { background: #84997a; }
+.sl-pc { --rn: var(--rise); --rw: var(--rise); }
+.sl-nc { --re: var(--rise); --rs: var(--rise); }
+.sl-pr { --rn: var(--rise); --re: var(--rise); }
+.sl-nr { --rs: var(--rise); --rw: var(--rise); }
+.sl-pc .top::after { background: linear-gradient(150deg, #c6d8ba 0%, #9cb391 100%); }
+.sl-nc .top::after { background: linear-gradient(330deg, #c6d8ba 0%, #9cb391 100%); }
+.sl-pr .top::after { background: linear-gradient(210deg, #c6d8ba 0%, #9cb391 100%); }
+.sl-nr .top::after { background: linear-gradient(30deg, #c6d8ba 0%, #9cb391 100%); }
+.sl.up .top { background: #7b9670; }
+.sl.up .top::after { background: linear-gradient(330deg, #8ba580 0%, #b6ccab 100%); }
+.sl.up .fl { background: #94ac8a; }
+.sl.up .fr { background: #84997a; }
+
+/* --- things standing on the ground plane -------------------------------- */
+
+/* Direction markers. A bare triangle sheared into the ground plane reads as a
+   wedge converging on the ball, not as a heading --- the stem is what makes
+   the direction of travel unambiguous. */
+.pl {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: var(--w);
+  height: var(--w);
+  margin: calc(var(--w) / -2) 0 0 calc(var(--w) / -2);
+  transform: matrix(1, 0.5, -1, 0.5, 0, 0);
+  place-items: center;
+}
+
+.pl.ar {
+  display: none;
+  transform: matrix(1, 0.5, -1, 0.5, 0, 0) rotate(var(--rot));
+}
+
+.armed .pl.ar { display: grid; }
+.armed .t:has(.ar) .top { background: var(--white); }
+.armed .t:has(.ar) .top::after { transform: scale(0.945); }
+
+.tri {
+  display: block;
+  width: calc(var(--w) * 0.46);
+  height: calc(var(--w) * 0.24);
+  background: rgba(44, 58, 40, 0.9);
+  clip-path: polygon(0% 33%, 57% 33%, 57% 0%, 100% 50%, 57% 100%, 57% 67%, 0% 67%);
+}
+
+.cup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--w) * 0.4);
+  height: calc(var(--w) * 0.2);
+  border-radius: 50%;
+  background: #41513c;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.flag {
+  position: absolute;
+  bottom: 50%;
+  left: calc(50% + var(--w) * 0.02);
+  z-index: 9;
+  width: calc(var(--w) * 0.018);
+  min-width: 2px;
+  height: calc(var(--w) * 0.46);
+  border-radius: 2px;
+  background: #4a4a46;
+}
+
+.flag::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 100%;
+  border-top: calc(var(--w) * 0.085) solid transparent;
+  border-bottom: calc(var(--w) * 0.085) solid transparent;
+  border-left: calc(var(--w) * 0.22) solid var(--red);
+}
+
+.shdw {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--w) * 0.34);
+  height: calc(var(--w) * 0.17);
+  border-radius: 50%;
+  background: rgba(60, 80, 56, 0.26);
+  transform: translate(-50%, -30%);
+}
+
+.ball {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 8;
+  width: calc(var(--w) * 0.3);
+  height: calc(var(--w) * 0.3);
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: inset -2px -3px 5px rgba(80, 95, 76, 0.2);
+  transform: translate(-50%, -72%);
+}
+
+/* --- the hand ----------------------------------------------------------- */
+
+.hand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.c {
+  position: relative;
+  display: grid;
+  width: var(--cw);
+  height: calc(var(--cw) * 1.4);
+  margin: 0 calc(var(--s1) * -1);
+  border: 0;
+  border-radius: var(--s2);
+  background: var(--card);
+  box-shadow: 0 6px 12px rgba(90, 70, 40, 0.24), inset 0 -5px 0 rgba(0, 0, 0, 0.09);
+  cursor: pointer;
+  font: inherit;
+  place-items: center;
+  transition: transform 0.16s, box-shadow 0.16s;
+}
+
+.c:nth-child(1) { transform: rotate(-6deg); }
+.c:nth-child(3) { transform: rotate(6deg); }
+.hand .c:only-child { transform: none; }
+
+.c.sel {
+  box-shadow: 0 12px 20px rgba(90, 70, 40, 0.3), 0 0 0 4px var(--white),
+    inset 0 -5px 0 rgba(0, 0, 0, 0.09);
+  transform: translateY(calc(var(--s3) * -1)) rotate(0) !important;
+}
+
+.c.spent {
+  background: #cdc7b6;
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.55;
+}
+
+.num {
+  position: absolute;
+  top: var(--s1);
+  left: var(--s1);
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--white);
+  color: #8a6236;
+  font-size: calc(var(--cw) * 0.32);
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* the move mark: a shaft along the ground */
+.gl {
+  position: relative;
+  width: 56%;
+  height: 4px;
+  margin-top: var(--s2);
+  border-radius: 3px;
+  background: #7a5a2c;
+}
+
+.gl::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: -3px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 12px solid #7a5a2c;
+}
+
+/* the jump mark: the same head, carried over an arc */
+.gl.arc {
+  height: calc(var(--cw) * 0.24);
+  border: 4px solid #7a5a2c;
+  border-bottom: 0;
+  border-radius: calc(var(--cw) * 0.3) calc(var(--cw) * 0.3) 0 0;
+  background: none;
+}
+
+.gl.arc::after {
+  top: auto;
+  right: -9px;
+  bottom: -8px;
+  border-left-color: #7a5a2c;
+}
+
+/* --- end of level ------------------------------------------------------- */
+
+/* Sits where the hand sits rather than over the board, so the position you
+   lost from stays readable. Not a <dialog>, no role=dialog, no "modal" in any
+   class or id --- spec/crit-5.test.ts fails all of those. */
+.endcard {
+  display: flex;
+  align-items: center;
+  gap: var(--s6);
+}
+
+.endcard .c {
+  margin: 0 var(--s1) 0 0;
+  transform: none !important;
+}
+
+.endcard .c.spent {
+  background: #bdb7a6;
+  box-shadow: 0 4px 10px rgba(90, 70, 40, 0.16);
+  opacity: 1;
+}
+
+.endcard .c.spent .num {
+  background: #f4f2ea;
+  color: #5f5c51;
+}
+
+/* one restart component, two sizes */
+.redo {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 8px 16px rgba(90, 70, 40, 0.28), inset 0 -5px 0 rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  place-items: center;
+  transition: transform 0.15s;
+}
+
+.redo:hover { transform: translateY(-2px); }
+
+.redo.sm {
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 3px 8px rgba(90, 70, 40, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.redo svg {
+  width: 50%;
+  height: 50%;
+  fill: none;
+  stroke: #5b4526;
+  stroke-linecap: round;
+  stroke-width: 2.6;
+}
+
+/* --- phone -------------------------------------------------------------- */
+
+@media (max-width: 700px) {
+  :root {
+    --pad-x: 24px;
+    --pad-y: 264px;
+    --w-max: 150px;
+  }
+
+  .screen {
+    gap: var(--s4);
+    padding: var(--s2) var(--s1);
+  }
+
+  .top-bar {
+    top: var(--s2);
+    right: var(--s2);
+    left: var(--s2);
+  }
+
+  .endcard { gap: var(--s3); }
+  .lvl,
+  .redo.sm { width: 44px; height: 44px; }
+  .redo { width: 60px; height: 60px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

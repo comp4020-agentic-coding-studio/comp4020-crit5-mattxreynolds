@@ -1,39 +1,104 @@
 ---
 import "../styles/styles.css";
+
+// T1 renders level 1 statically, from a literal that mirrors the shape the
+// level format will take in T3 and the DOM `render.ts` will emit in T5. When
+// the engine lands, this frontmatter goes and the same markup comes from
+// there --- the CSS does not change.
+const cols = 3;
+const rows = 3;
+const ball = { r: 1, c: 0 };
+const hole = { r: 1, c: 2 };
+
+// The tile knob --w follows from the board's shape; see styles.css.
+const fx = 2 / (cols + rows);
+const fy = 1 / ((cols + rows - 2) / 4 + 0.8);
+
+const tiles = Array.from({ length: rows * cols }, (_, i) => ({
+  r: Math.floor(i / cols),
+  c: i % cols,
+}));
+
+const at = (t: { r: number; c: number }, p: { r: number; c: number }) =>
+  t.r === p.r && t.c === p.c;
 ---
+
 <!doctype html>
 <html lang="en-AU">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>Card Golf</title>
     <meta
       name="description"
-      content="Replace this with one sentence saying what this page is. A search result and a link preview both show it."
+      content="A turn-based golf puzzle: spend a hand of movement cards to roll the ball into the hole across an isometric course."
     />
 
     <!--
-      The link-preview card: public/card.png, 1200x630 --- replace it. The URL
-      resolves against this page, like any link. No og:title/og:description:
-      scrapers fall back to the <title> and description above.
+      The link-preview card: public/card.png, 1200x630. The URL resolves
+      against this page, like any link. No og:title/og:description: scrapers
+      fall back to the <title> and description above.
     -->
     <meta property="og:type" content="website" />
     <meta property="og:image" content="./card.png" />
     <meta name="twitter:card" content="summary_large_image" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <header>
-      <nav aria-label="Primary">
-        <a href="./">Home</a>
+      <nav aria-label="Primary" class="vh">
+        <a href="./">Card Golf</a>
       </nav>
     </header>
     <main>
-      <h1>COMP4020 prototype</h1>
-      <p>
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
+      <h1 class="vh">Card Golf</h1>
+      <section class="screen" data-state="play">
+        <div class="top-bar">
+          <div class="lvl">1</div>
+          <button class="redo sm" type="button" aria-label="Restart level">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 11a8 8 0 1 0-2.3 5.7"></path>
+              <path d="M20 4v6h-6"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="stage">
+          <div
+            class="board"
+            style={`--cols:${cols};--rows:${rows};--fx:${fx.toFixed(5)};--fy:${fy.toFixed(5)}`}
+          >
+            {
+              tiles.map((t) => (
+                <div class="t gr" style={`--r:${t.r};--c:${t.c};--lv:0`}>
+                  <div class="fl" />
+                  <div class="fr" />
+                  <div class="top" />
+                  <div class="fx">
+                    {at(t, hole) && <div class="cup" />}
+                    {at(t, hole) && <div class="flag" />}
+                    {at(t, ball) && <div class="shdw" />}
+                    {at(t, ball) && <div class="ball" />}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <div class="hand">
+          <button class="c" type="button" aria-label="Play card 2">
+            <div class="num">2</div>
+            <div class="gl"></div>
+          </button>
+        </div>
+      </section>
     </main>
     <script src="../scripts/main.ts"></script>
   </body>
