@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Card, Dir, Level, Pos, Tile } from "./types";
-import { resolve } from "./rules";
+import { offers, resolve } from "./rules";
 
 // The resolver is the whole engine and it is pure: no DOM, no state, no
 // randomness. T4 covers flat ground only --- height, ramps and sand arrive in
@@ -92,5 +92,77 @@ describe("a direction that moves nothing", () => {
     const result = play(level, "nw");
     expect(result.landing).toEqual(level.ball);
     expect(result.path).toEqual([level.ball]);
+  });
+});
+
+describe("height", () => {
+  /** A 1xN lane whose tiles sit at the given heights, hole at the far end. */
+  function slope(heights: number[], ball: number, value: number): Level {
+    const grid = [heights.map((height) => ({ terrain: "ground", height }) as Tile)];
+    return {
+      id: 1,
+      grid,
+      ball: { r: 0, c: ball },
+      hand: [move(value)],
+    };
+  }
+
+  it("continues across level ground", () => {
+    const level = slope([1, 1, 1, 1], 0, 3);
+    expect(play(level, "se").landing).toEqual({ r: 0, c: 3 });
+  });
+
+  it("is blocked by a step up, and stops at the tile before it", () => {
+    // A wall is not a tile type: it is a tile one level up, and this is the
+    // rule that stops the ball at it.
+    const level = slope([0, 0, 1, 0], 0, 3);
+    const result = play(level, "se");
+    expect(result.landing).toEqual({ r: 0, c: 1 });
+    expect(result.outcome).toBe("stopped");
+  });
+
+  it("is blocked by a step up of any size", () => {
+    const level = slope([0, 4], 0, 3);
+    expect(play(level, "se").landing).toEqual({ r: 0, c: 0 });
+  });
+
+  it("drops off a ledge and keeps the steps it has left", () => {
+    // The drop is free: gravity is not charged to the card.
+    const level = slope([2, 0, 0, 0], 0, 3);
+    expect(play(level, "se").landing).toEqual({ r: 0, c: 3 });
+  });
+
+  it("drops more than one level at a time", () => {
+    const level = slope([3, 0], 0, 1);
+    expect(play(level, "se").landing).toEqual({ r: 0, c: 1 });
+  });
+
+  it("drops repeatedly down a staircase", () => {
+    const level = slope([3, 2, 1, 0], 0, 3);
+    expect(play(level, "se").path).toEqual([
+      { r: 0, c: 0 },
+      { r: 0, c: 1 },
+      { r: 0, c: 2 },
+      { r: 0, c: 3 },
+    ]);
+  });
+
+  it("climbs nothing, even one step, so a staircase is one-way", () => {
+    const level = slope([0, 1, 2, 3], 0, 3);
+    expect(play(level, "se").landing).toEqual({ r: 0, c: 0 });
+  });
+
+  it("holes out on a tile below the one it left", () => {
+    const grid = [[{ terrain: "ground", height: 2 } as Tile, { terrain: "hole", height: 0 } as Tile]];
+    const level: Level = { id: 1, grid, ball: { r: 0, c: 0 }, hand: [move(2)] };
+    expect(play(level, "se").outcome).toBe("holed");
+  });
+
+  it("does not offer a direction blocked by a climb", () => {
+    // Nothing happens when you tap it, so it is not shown --- the same rule
+    // that hides a direction running straight off the board.
+    const level = slope([0, 0, 2], 1, 2);
+    const dirs = offers(level, level.ball, level.hand[0]).map((o) => o.dir);
+    expect(dirs).toEqual(["nw"]);
   });
 });
