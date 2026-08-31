@@ -113,22 +113,33 @@ describe("the end of a run", () => {
   });
 
   it("shows the run's restart count, which is the score", () => {
-    expect(doc.querySelector(".score-num")?.textContent).toBe("3");
+    expect(doc.querySelector(".finish-message")?.textContent).toContain(
+      "You finished with 3 resets.",
+    );
   });
 
   it("shows a clean run as a zero rather than hiding it", () => {
     const perfect = dom(screenHTML({ ...startRun(LEVELS), phase: "finished" as const }));
-    expect(perfect.querySelector(".score-num")?.textContent).toBe("0");
+    expect(perfect.querySelector(".finish-message")?.textContent).toContain(
+      "You finished with 0 resets.",
+    );
   });
 
-  it("keeps one restart, in the gutter, where it has been all along", () => {
-    expect(doc.querySelectorAll(".redo").length).toBe(1);
-    expect(doc.querySelector(".top-bar .redo")).toBeTruthy();
+  it("names the full-run action beside the result rather than stranding it in the gutter", () => {
+    expect(doc.querySelectorAll("[data-act='restart']").length).toBe(1);
+    expect(doc.querySelector(".result .start-over")?.textContent).toContain("Start over");
+    expect(doc.querySelector(".top-bar .redo")).toBe(null);
   });
 
-  it("says all of it in numerals, with no word anywhere", () => {
-    const text = doc.body.textContent?.replace(/\s+/g, "") ?? "";
-    expect(text).toBe("3");
+  it("completes the same twelve-step course shown during play", () => {
+    expect(doc.querySelectorAll(".progress-step").length).toBe(LEVELS.length);
+    expect(doc.querySelectorAll(".progress-step.done").length).toBe(LEVELS.length);
+    expect(doc.querySelectorAll(".progress-step.current, .progress-step.failed").length).toBe(0);
+  });
+
+  it("states plainly that the whole run is complete", () => {
+    expect(doc.querySelector("h2")?.textContent).toBe("Congratulations!");
+    expect(doc.body.textContent).toContain("You finished with 3 resets.");
   });
 
   it("is not a dialog, and carries nothing the no-tutorial rule would fail", () => {
@@ -175,17 +186,35 @@ describe("the hand and the gutter", () => {
     expect(cards[0].querySelector(".num")?.textContent).toBe("2");
   });
 
-  it("shows the level number and exactly one restart, in every state", () => {
-    for (const run of [startRun(LEVELS), { ...startRun(LEVELS), phase: "lost" as const }]) {
-      const doc = dom(screenHTML(run));
-      expect(doc.querySelectorAll(".redo").length).toBe(1);
-      expect(doc.querySelector(".lvl")?.textContent).toBe("1");
-    }
+  it("keeps the level and progress symmetrical in the toolbar, with the tally below", () => {
+    const doc = dom(screenHTML(startRun(LEVELS)));
+    expect(doc.querySelector(".top-bar .lvl")?.textContent).toBe("1");
+    expect(doc.querySelector(".top-bar .progress")).toBeTruthy();
+    expect(doc.querySelector(".top-bar .redo")).toBeTruthy();
+    expect(doc.querySelector(".top-bar .tally")).toBe(null);
+    expect(doc.querySelector(".run-tally")?.textContent).toBe("0");
   });
 
-  it("dims the board and shows the spent hand when the level is lost", () => {
+  it("shows all twelve levels and distinguishes progress without words", () => {
+    const run = { ...startRun(LEVELS, 4), restarts: 2 };
+    const doc = dom(screenHTML(run));
+    expect(doc.querySelectorAll(".progress-step").length).toBe(12);
+    expect(doc.querySelectorAll(".progress-step.done").length).toBe(4);
+    expect(doc.querySelectorAll(".progress-step.current").length).toBe(1);
+    expect(doc.querySelectorAll(".progress-step.ahead").length).toBe(7);
+    expect(doc.querySelector(".progress")?.getAttribute("aria-label")).toBe("Level 5 of 12");
+  });
+
+  it("makes a loss distinct while preserving the board and spent hand", () => {
     const doc = dom(screenHTML({ ...startRun(LEVELS), phase: "lost", spent: [true] }));
+    expect(doc.querySelector(".screen")?.classList.contains("lost")).toBe(true);
     expect(doc.querySelector(".board")?.classList.contains("dim")).toBe(true);
+    expect(doc.querySelector(".fail-mark")).toBe(null);
+    expect(doc.querySelector(".loss-restart")).toBeTruthy();
+    expect(doc.querySelector(".top-bar .redo")).toBeTruthy();
+    expect(doc.querySelectorAll("[data-act='restart']").length).toBe(2);
+    expect(doc.querySelectorAll(".progress-step.failed").length).toBe(1);
+    expect(doc.querySelectorAll(".progress-step.current").length).toBe(0);
     expect(doc.querySelector(".endcard")).toBeTruthy();
     expect(doc.querySelectorAll(".endcard .c.spent").length).toBe(1);
   });

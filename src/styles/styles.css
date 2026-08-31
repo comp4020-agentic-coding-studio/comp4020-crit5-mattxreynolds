@@ -80,20 +80,90 @@ main {
 .top-bar {
   position: absolute;
   top: var(--s3);
-  right: var(--s3);
-  left: var(--s3);
+  left: 50%;
   z-index: 30;
   display: flex;
+  width: min(640px, calc(100vw - var(--s6)));
+  min-height: 60px;
+  padding: 8px;
+  border: 1px solid rgba(84, 99, 78, 0.1);
+  border-radius: 999px;
+  background: rgba(253, 253, 250, 0.68);
+  box-shadow: 0 8px 24px rgba(70, 90, 66, 0.12);
+  backdrop-filter: blur(10px);
   align-items: center;
   justify-content: space-between;
+  transform: translateX(-50%);
+}
+
+.bar-end { width: 44px; height: 44px; }
+
+.finished .top-bar {
+  width: 250px;
+  justify-content: center;
+}
+
+.finished .bar-end { display: none; }
+
+/* The whole run at a glance. Dots are deliberately connected: this is one
+   course being travelled, not twelve unrelated status lights. */
+.progress {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transform: translate(-50%, -50%);
+}
+
+.progress::before {
+  content: "";
+  position: absolute;
+  right: 5px;
+  left: 5px;
+  z-index: -1;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(84, 99, 78, 0.18);
+}
+
+.progress-step {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(84, 99, 78, 0.38);
+  border-radius: 50%;
+  background: #edf1e7;
+  box-shadow: 0 0 0 2px rgba(253, 253, 250, 0.72);
+}
+
+.progress-step.done {
+  border-color: #728b68;
+  background: #728b68;
+}
+
+.progress-step.current {
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--white);
+  background: var(--card);
+  box-shadow: 0 2px 5px rgba(90, 70, 40, 0.3);
+}
+
+.progress-step.failed {
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--white);
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(214, 74, 60, 0.18);
 }
 
 .lvl {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(182, 204, 171, 0.34);
   color: #54634e;
   font-size: 24px;
   font-weight: 900;
@@ -102,8 +172,8 @@ main {
 
 .left {
   display: flex;
+  width: 44px;
   align-items: center;
-  gap: var(--s2);
 }
 
 /* The live restart tally --- same ink-not-orange reading as .score, shrunk to
@@ -135,6 +205,22 @@ main {
   font-size: 20px;
   font-weight: 900;
   line-height: 1;
+}
+
+.run-tally {
+  position: absolute;
+  top: calc(var(--s3) + 68px);
+  left: 50%;
+  z-index: 29;
+  min-width: 54px;
+  padding: 5px 10px;
+  border: 1px solid rgba(84, 99, 78, 0.1);
+  border-radius: 999px;
+  background: rgba(253, 253, 250, 0.62);
+  box-shadow: 0 5px 14px rgba(70, 90, 66, 0.09);
+  backdrop-filter: blur(8px);
+  justify-content: center;
+  transform: translateX(-50%);
 }
 
 .stage {
@@ -177,7 +263,25 @@ main {
 
 /* you must still be able to read the position you lost from */
 .board.dim {
-  opacity: 0.6;
+  opacity: 0.58;
+  filter: grayscale(0.42) drop-shadow(0 12px 18px rgba(92, 54, 47, 0.16));
+}
+
+/* Loss arrives loudly, then settles. The board remains readable because it is
+   the explanation of what went wrong; the red wash and cross supply the
+   unmistakable state change that the old mild dimming lacked. */
+.lost::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(214, 74, 60, 0.13);
+  pointer-events: none;
+  animation: loss-wash 560ms ease-out both;
+}
+
+.lost .loss-restart {
+  animation: restart-call 640ms 180ms cubic-bezier(0.2, 0.9, 0.25, 1.25) both;
 }
 
 .t {
@@ -550,12 +654,19 @@ main {
 
 /* --- the end of a run ----------------------------------------------------- */
 
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+}
+
 /* The goal itself, at size, rather than the last board dimmed. It borrows the
    cup and flag exactly as the board draws them --- one --w knob is all they
    ever needed --- so the finish is unmistakably the same object the whole game
    has been about. */
 .finish {
-  --w: min(52vmin, 460px);
+  --w: min(46vmin, 420px);
   position: relative;
   width: var(--w);
   height: calc(var(--w) / 2);
@@ -565,38 +676,57 @@ main {
 /* The score: how many restarts the run cost. The restart mark is the thing
    being counted, so it is the right glyph --- and it is ink here, not orange,
    which is what says it is a reading and not a button. */
-.score {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
+.finish-message {
+  text-align: center;
+  animation: score-arrive 560ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
 }
 
-.score-mark {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-}
-
-.score-mark svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: #6b7a66;
-  stroke-linecap: round;
-  stroke-width: 2.4;
-}
-
-.score-num {
-  color: #54634e;
-  font-size: 64px;
+.finish-message h2 {
+  color: #4f624a;
+  font-size: clamp(32px, 4vmin, 52px);
   font-weight: 900;
-  line-height: 1;
 }
 
-@media (max-width: 700px) {
-  .score-mark { width: 34px; height: 34px; }
-  .score-num { font-size: 48px; }
+.finish-message p {
+  margin-top: 4px;
+  color: #6b7a66;
+  font-size: clamp(18px, 2vmin, 24px);
+  font-weight: 600;
+}
+
+.finish-message strong {
+  color: #4f624a;
+  font-size: 1.2em;
+  font-weight: 900;
+}
+
+.start-over {
+  display: flex;
+  min-height: 58px;
+  padding: 0 var(--s3);
+  border: 0;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 8px 16px rgba(90, 70, 40, 0.28), inset 0 -5px 0 rgba(0, 0, 0, 0.1);
+  color: #5b4526;
+  cursor: pointer;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 900;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.15s;
+}
+
+.start-over:hover { transform: translateY(-2px); }
+
+.start-over svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.6;
 }
 
 /* --- end of level ------------------------------------------------------- */
@@ -605,9 +735,44 @@ main {
    lost from stays readable. Not a <dialog>, no role=dialog, no "modal" in any
    class or id --- spec/crit-5.test.ts fails all of those. */
 .endcard {
+  position: relative;
+  z-index: 21;
   display: flex;
   align-items: center;
-  gap: var(--s6);
+}
+
+.loss-restart {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.loss-restart:hover { transform: translate(-50%, -2px); }
+
+.lost .endcard .c {
+  animation: spent-drop 420ms ease-out both;
+}
+
+@keyframes loss-wash {
+  0% { opacity: 0; }
+  28% { opacity: 1; }
+  100% { opacity: 0.28; }
+}
+
+@keyframes restart-call {
+  from { opacity: 0; transform: translateX(-50%) scale(0.55) rotate(-70deg); }
+  to { opacity: 1; transform: translateX(-50%) scale(1) rotate(0); }
+}
+
+@keyframes spent-drop {
+  from { transform: translateY(-10px) rotate(0); opacity: 0.9; }
+  to { transform: translateY(0) rotate(0); opacity: 1; }
+}
+
+@keyframes score-arrive {
+  from { opacity: 0; transform: translateY(-14px) scale(0.88); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .endcard .c {
@@ -673,11 +838,19 @@ main {
 
   .top-bar {
     top: var(--s2);
-    right: var(--s2);
-    left: var(--s2);
+    width: calc(100vw - var(--s3));
+    min-height: 58px;
+    padding: 7px;
   }
 
-  .endcard { gap: var(--s3); }
+  .finished .top-bar { width: 190px; }
+
+  .progress { gap: 4px; }
+  .progress-step { width: 7px; height: 7px; border-width: 1px; }
+  .progress-step.current,
+  .progress-step.failed { width: 12px; height: 12px; border-width: 2px; }
+
+  .endcard { gap: var(--s2); }
   .lvl,
   .redo.sm { width: 44px; height: 44px; }
   .redo { width: 60px; height: 60px; }

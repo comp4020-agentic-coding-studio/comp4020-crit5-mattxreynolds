@@ -32,54 +32,78 @@ export function screenHTML(run: Run): string {
   // engine's business, and the player finds out by tapping one.
   const marked = armed === null ? [] : DIRS.map((dir) => ({ dir, cell: step(run.ball, dir) }));
 
-  const classes = ["screen", armed !== null ? "armed" : ""].filter(Boolean).join(" ");
+  const classes = ["screen", armed !== null ? "armed" : "", run.phase === "lost" ? "lost" : ""]
+    .filter(Boolean)
+    .join(" ");
 
   if (run.phase === "finished") return finishHTML(run);
 
   return [
     `<section class="${classes}" data-phase="${run.phase}">`,
-    gutter(run, true, "Restart level"),
+    gutter(run, true, true),
     `<div class="stage">${boardHTML(level, run, marked)}</div>`,
     run.phase === "play" ? handHTML(run, level) : endHTML(level),
     `</section>`,
   ].join("");
 }
 
-/** Level number and running restart tally left, restart button right --- one
- *  restart, one place, every state. On the ending screen there is no current
- *  level to number and the score already has its own big reveal, so both
- *  sides of `left` are skipped there; the restart starts the whole run again
- *  rather than the last level of it. */
-function gutter(run: Run, level: boolean, label: string): string {
+/** A symmetrical toolbar: level left, progress centred, restart right. The
+ *  running tally sits directly below rather than pulling the left side wider.
+ *  The ending keeps only the completed course because its action belongs with
+ *  the result, not in a distant corner. */
+function gutter(run: Run, level: boolean, action: boolean): string {
   const left = level
-    ? [
-        `<div class="lvl">${run.index + 1}</div>`,
-        `<span class="tally"><span class="tally-mark" aria-hidden="true">${RESTART_ICON}</span>`,
-        `<span class="tally-num">${run.restarts}</span></span>`,
-      ].join("")
+    ? `<div class="lvl">${run.index + 1}</div>`
     : "";
-  return [
+  const bar = [
     `<div class="top-bar">`,
     `<div class="left">${left}</div>`,
-    `<button class="redo sm" type="button" data-act="restart" aria-label="${label}">${RESTART_ICON}</button>`,
+    progressHTML(run),
+    action
+      ? `<button class="redo sm" type="button" data-act="restart" aria-label="Restart level">${RESTART_ICON}</button>`
+      : `<span class="bar-end" aria-hidden="true"></span>`,
     `</div>`,
   ].join("");
+  const tally = level
+    ? `<span class="tally run-tally"><span class="tally-mark" aria-hidden="true">${RESTART_ICON}</span><span class="tally-num">${run.restarts}</span></span>`
+    : "";
+  return `${bar}${tally}`;
 }
 
-/** The run is over. Not the board dimmed but the goal itself, and the score:
- *  how many restarts it took, which is the thing to beat on the next run.
- *
- *  The counted glyph and the button are the same restart mark on purpose ---
- *  it is the thing being counted --- and they are told apart by the contract's
- *  own rule: orange is what you can act on, so the score is ink on the field
- *  and only the gutter disc is a control. */
+/** The run's shape, always visible: twelve positions rather than a percentage
+ *  or a sentence. The same strip follows the player from the opening screen
+ *  to the score, so the ending reads as completion rather than another level. */
+function progressHTML(run: Run): string {
+  const steps = run.levels
+    .map((_, i) => {
+      const state =
+        run.phase === "finished" || i < run.index
+          ? "done"
+          : i === run.index
+            ? run.phase === "lost"
+              ? "failed"
+              : "current"
+            : "ahead";
+      return `<i class="progress-step ${state}" aria-hidden="true"></i>`;
+    })
+    .join("");
+  const at = run.phase === "finished" ? run.levels.length : run.index + 1;
+  return `<div class="progress" role="img" aria-label="Level ${at} of ${run.levels.length}">${steps}</div>`;
+}
+
+/** The run is over. The goal gives way to an explicit result sentence and a
+ *  named full-run action; unlike the teaching screens, there is nothing left
+ *  for prose to spoil here. */
 function finishHTML(run: Run): string {
+  const noun = run.restarts === 1 ? "reset" : "resets";
   return [
     `<section class="screen finished" data-phase="finished">`,
-    gutter(run, false, "Play again"),
-    `<div class="stage"><div class="finish"><div class="cup"></div><div class="flag"></div></div></div>`,
-    `<div class="score"><span class="score-mark" aria-hidden="true">${RESTART_ICON}</span>`,
-    `<span class="score-num">${run.restarts}</span></div>`,
+    gutter(run, false, false),
+    `<div class="result">`,
+    `<div class="finish"><div class="cup"></div><div class="flag"></div></div>`,
+    `<div class="finish-message"><h2>Congratulations!</h2><p>You finished with <strong>${run.restarts}</strong> ${noun}.</p></div>`,
+    `<button class="start-over" type="button" data-act="restart">${RESTART_ICON}<span>Start over</span></button>`,
+    `</div>`,
     `</section>`,
   ].join("");
 }
@@ -190,7 +214,12 @@ function handHTML(run: Run, level: Level): string {
  *  dialog, and carrying no words. */
 function endHTML(level: Level): string {
   const cards = level.hand.map((card) => cardHTML(card.kind, card.value, true, false)).join("");
-  return `<div class="endcard"><div class="hand">${cards}</div></div>`;
+  return [
+    `<div class="endcard">`,
+    `<button class="redo loss-restart" type="button" data-act="restart" aria-label="Restart level">${RESTART_ICON}</button>`,
+    `<div class="hand">${cards}</div>`,
+    `</div>`,
+  ].join("");
 }
 
 function cardHTML(
