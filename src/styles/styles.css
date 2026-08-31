@@ -236,6 +236,12 @@ main {
 .up .fl { background: #6e8664; }
 .up .fr { background: #5e7556; }
 
+/* the third step of the same ramp, for ground two or more levels up */
+.up2 .top { background: #5c7452; }
+.up2 .top::after { background: #6b8560; }
+.up2 .fl { background: #516247; }
+.up2 .fr { background: #43533c; }
+
 .sd .top { background: #dbc899; }
 .sd .top::after {
   background: #eddcae radial-gradient(circle, rgba(180, 150, 90, 0.5) 1.4px, transparent 1.8px) 0 0 /

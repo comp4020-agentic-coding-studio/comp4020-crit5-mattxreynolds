@@ -49,18 +49,15 @@ skipped run still exits 0 under `gh run watch`, so check the run's conclusion,
 not the exit code). Links check and secrets scan pass, both of which have never
 executed on this repo. A stranger can finish L1 without being told anything.
 
-### T7 — Resolver: height
-
-Climb blocked, drop continues with remaining steps, level continues — exactly
-as pinned in `PLAN.md`.
-
-**Done when:** unit tests cover all three height deltas.
-
-**Acceptance:** a sheer step blocks a `move` card — the ball stops at the tile
-before a higher tile that no ramp serves. (The spec's *focused* test is the
-ramp rule, in T8.)
-
 ### T8 — Resolver: ramps and sand
+
+**Carried from T7:** height renders but has never been *seen* in a shipped
+level --- `--lv` lift, the three-step ground ramp (`gr` / `up` / `up2`) and the
+climb rule all need one screenshot of a real level before they are trusted. The
+slice proved the CSS; the renderer emitting it is what hasn't been checked.
+Sand at height also loses its height colour, since `sd` replaces the ground
+class rather than layering on it --- decide whether that matters when sand
+first ships.
 
 **Carried from T1's port:** the four `.sl-*` gradient rules in `styles.css`
 put the *light* end at the ramp's raised edge, which inverts the contract's one
@@ -193,6 +190,9 @@ be done early — it needs the finished game.
 
 ## Done
 
+- **T7 — Resolver: height** — the climb rule stops the ball at the tile before
+  a step up, of any size; a drop keeps the steps it has left, so a staircase is
+  one-way. A blocked direction isn't offered.
 - **T5 — Wiring, render and the direction markers** — one renderer shared by
   the Astro build and the browser, so the page ships a real board rather than
   an empty div. The roll is animated; win, loss and restart all work at both

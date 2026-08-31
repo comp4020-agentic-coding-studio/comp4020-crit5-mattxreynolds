@@ -116,10 +116,12 @@ function tileHTML(
   return `<div class="t ${terrainClasses(tile)}" style="--r:${r};--c:${c};--lv:${tile.height}">${parts.join("")}</div>`;
 }
 
-/** Higher ground is darker --- one convention, every tile. */
+/** Higher ground is darker --- one convention, every tile. Three steps of it:
+ *  above the second, further levels stop being tellable apart by value alone
+ *  and the slab's own depth face is what reads. */
 function terrainClasses(tile: Tile): string {
-  const classes = [tile.height > 0 ? "up" : "gr"];
-  if (tile.terrain === "sand") classes[0] = "sd";
+  const ground = tile.height === 0 ? "gr" : tile.height === 1 ? "up" : "up2";
+  const classes = [tile.terrain === "sand" ? "sd" : ground];
   if (isRamp(tile)) classes.push("sl", `sl-${tile.ramp}`);
   return classes.join(" ");
 }

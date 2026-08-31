@@ -32,13 +32,21 @@ function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
   let at = from;
 
   for (let taken = 0; taken < value; taken++) {
+    const here = tileAt(level, at);
     const next = step(at, dir);
     const tile = tileAt(level, next);
 
     // Off the board, or over a gap in it: the ball stops where it is. The
     // card is still spent --- a wasted card is a real wrong move.
-    if (!tile) break;
+    if (!tile || !here) break;
 
+    // The climb rule, and the only thing `wall` used to mean: a ball cannot
+    // roll up a step. It stops at the tile before it, card spent.
+    if (tile.height > here.height) break;
+
+    // Lower ground it simply drops onto, keeping the steps it has left ---
+    // gravity is not charged to the card. Level ground continues. Both fall
+    // out of carrying on with the loop.
     at = next;
     path.push(at);
 
