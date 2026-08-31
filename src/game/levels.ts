@@ -267,6 +267,41 @@ function level11(): Level {
   };
 }
 
+/** L12: the finale --- run-up and ramp, sand as the safety net on top of the
+ *  plateau, and a jump-only gap past it, on the biggest hand yet.
+ *
+ *  A decoy step sits right beside the start, too high to even set off toward
+ *  it --- a wrong turn that costs nothing, so it teaches caution rather than
+ *  restarting the run. The real danger is later: the arc card also reaches
+ *  the plateau in one throw, which looks like it clears the whole level
+ *  early, but spends the only card that can cross the gap. Every card that
+ *  overshoots the plateau just lands in the sand instead of falling --- the
+ *  fall waits at the gap, for whoever rolls into it instead of jumping. */
+function level12(): Level {
+  const grid = field(5, 9);
+  for (let r = 0; r < 5; r++) {
+    grid[r][2] = { terrain: "ground", height: 0, ramp: "se" };
+    grid[r][3] = G(1);
+  }
+  grid[1][0] = G(1);
+  grid[2][4] = SAND(1);
+  for (let r = 0; r < 5; r++) grid[r][5] = null;
+  grid[2][8] = HOLE();
+  return {
+    id: 12,
+    grid,
+    ball: { r: 2, c: 0 },
+    hand: [
+      { kind: "move", value: 1 },
+      { kind: "move", value: 2 },
+      { kind: "move", value: 1 },
+      { kind: "jump", value: 2 },
+      { kind: "move", value: 1 },
+      { kind: "move", value: 1 },
+    ],
+  };
+}
+
 /** The curve: move, then distance, then four directions with a wrong one among
  *  them, then a step that blocks, a step that doesn't, the ramp between them,
  *  then the card that ignores all of it, and last a level that wants two of
@@ -286,6 +321,7 @@ export const LEVELS: Level[] = [
   level9(),
   level10(),
   level11(),
+  level12(),
 ];
 
 export { field, G, HOLE };
