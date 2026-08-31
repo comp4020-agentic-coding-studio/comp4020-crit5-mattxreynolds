@@ -37,45 +37,40 @@ describe("the board", () => {
 });
 
 describe("direction markers", () => {
-  // PLAN.md's landing-tile rule, and the design critic's open finding: a card
-  // reading 2 must put its marker two tiles from the ball, or the numeral
-  // never teaches itself.
+  // Markers are a direction chooser: four arrows on the tiles around the ball,
+  // not four destinations scattered at whatever distance each card reaches.
   const doc = dom(screenHTML(arm(startRun(LEVELS), 0)));
 
-  it("appear on the tile the ball would actually land on", () => {
-    // Offered tiles, not arrows: the hole is offered without one.
-    const marked = [...doc.querySelectorAll(".t")].filter((t) => t.querySelector(".hit"));
-    const at = marked.map((t) => {
-      const style = t.getAttribute("style") ?? "";
-      return {
-        r: Number(/--r:(-?\d+)/.exec(style)?.[1]),
-        c: Number(/--c:(-?\d+)/.exec(style)?.[1]),
-      };
-    });
-    // L1: ball at (1,0), card 2, on a 3x3 board. Two tiles east is the hole at
-    // (1,2); two south-west and two north-east run off the board and stop at
-    // the rim; two north-west moves nothing at all.
-    expect(at).toContainEqual({ r: 1, c: 2 });
+  const markedTiles = (): Array<{ r: number; c: number }> =>
+    [...doc.querySelectorAll(".t")]
+      .filter((t) => t.querySelector(".hit"))
+      .map((t) => {
+        const style = t.getAttribute("style") ?? "";
+        return {
+          r: Number(/--r:(-?\d+)/.exec(style)?.[1]),
+          c: Number(/--c:(-?\d+)/.exec(style)?.[1]),
+        };
+      });
+
+  it("sit on the tiles immediately beside the ball", () => {
+    // L1: ball at (1,0) on a 3x3 board. South-east, north-east and south-west
+    // all move it; north-west runs straight off the board and is not offered.
+    const at = markedTiles();
+    expect(at).toContainEqual({ r: 1, c: 1 });
     for (const marker of at) {
       const distance = Math.abs(marker.r - 1) + Math.abs(marker.c - 0);
-      expect(distance, `a marker sits ${distance} tiles from the ball`).toBeGreaterThan(0);
+      expect(distance, `a marker sits ${distance} tiles from the ball`).toBe(1);
     }
   });
 
   it("never offers a direction that would move the ball nowhere", () => {
-    const marked = [...doc.querySelectorAll(".t")].filter((t) => t.querySelector(".hit"));
-    for (const tile of marked) {
-      const style = tile.getAttribute("style") ?? "";
-      const r = Number(/--r:(-?\d+)/.exec(style)?.[1]);
-      const c = Number(/--c:(-?\d+)/.exec(style)?.[1]);
-      expect({ r, c }).not.toEqual({ r: 1, c: 0 });
-    }
+    // North-west from (1,0) leaves the board immediately, so it is not shown:
+    // a stranger who taps an arrow and sees nothing reads the game as broken.
+    expect(markedTiles()).not.toContainEqual({ r: 1, c: 0 });
+    expect(markedTiles().length).toBe(3);
   });
 
   it("gives every offered tile an arrow and a hit target that is a real button", () => {
-    // The hole is offered like any other tile. Marking it with the white ring
-    // alone made L1 look unfinishable: the ring reads as decoration, and only
-    // the arrow reads as "go here".
     for (const tile of doc.querySelectorAll(".t")) {
       expect(Boolean(tile.querySelector(".ar"))).toBe(Boolean(tile.querySelector("button.hit")));
     }

@@ -138,10 +138,12 @@ The contract above was validated against a rendered slice over two independent
 critiques (`docs/design/iso-slice.html`). These survive and belong to `plan`,
 not to `design`:
 
-- **Markers sit on the adjacent tile, not the landing tile.** A card reading `2`
-  puts its marker one tile away, so the numeral never teaches itself. Moving the
-  marker to where the ball actually stops fixes that for free — but it needs the
-  resolver, which is why it is a build task and not a visual one.
+- ~~**Markers sit on the adjacent tile, not the landing tile.**~~ **Closed, the
+  other way.** Landing-tile markers were built in T5 and played, and they read
+  as four unrelated destinations rather than a choice of heading; on the hole
+  the marker collided with the cup. Markers are back on the tiles beside the
+  ball — see "Markers sit on the tile beside the ball" under Build decisions
+  for why the original argument didn't survive contact.
 - **`move` versus `jump` is never demonstrated in a played state.** The rule that
   a `move` card cannot climb has no on-screen consequence a stranger can see.
   This is level-design work, and it is the same teaching-budget risk named above.
@@ -206,10 +208,25 @@ landing equals the start tile is not shown. A stranger tapping an arrow and
 seeing nothing happen reads the game as broken. Wrong moves stay possible —
 plenty of legal moves waste a card — so this does not soften "it can be lost".
 
-**Markers sit on the landing tile,** not the adjacent one. This is the design
-critic's open finding and it is why the resolver has to exist before the
-markers do: a card reading `2` whose marker lands two tiles away teaches the
-numeral for free, with no words.
+**Markers sit on the tile beside the ball**, one step in each offered
+direction. *This reverses an earlier decision, and the reversal came from
+playing the built game rather than from arguing about it.*
+
+The landing-tile rule was the design critic's finding and the argument for it
+was good: a card reading `2` whose marker lands two tiles away teaches the
+numeral for free. Built and played, it did not hold up. Four markers at four
+different distances read as four unrelated destinations rather than as a
+choice of heading, and on a small board the distances are mostly *not* the
+card's value anyway --- a move that stops at the rim puts its marker one tile
+out from a card reading `2`, which teaches the wrong thing. Worse, a marker
+landing on the hole collided with the cup, the one tile where the affordance
+has to be unmissable.
+
+Four arrows around the ball is what the original does and what the validated
+slice showed. The numeral now teaches itself by being played: tap `2`, watch
+the ball roll two. The resolver is still what decides which directions are
+offered at all --- a direction whose landing equals the start is still not
+shown --- so the resolver still has to exist before the markers do.
 
 **The ball animates along its path** — one CSS transform transition per step,
 queued. A ball that teleports doesn't show *why* it stopped, and every rule

@@ -193,10 +193,12 @@ be done early — it needs the finished game.
 
 ## Done
 
-- **T5 — Wiring, render and the landing-tile markers** — one renderer shared
-  by the Astro build and the browser, so the page ships a real board rather
-  than an empty div. Markers sit on the resolver's landing tile; the roll is
-  animated; win, loss and restart all work at both viewports.
+- **T5 — Wiring, render and the direction markers** — one renderer shared by
+  the Astro build and the browser, so the page ships a real board rather than
+  an empty div. The roll is animated; win, loss and restart all work at both
+  viewports. Markers were built on the landing tile per `PLAN.md`, played,
+  and moved back to the tiles beside the ball — the reversal and its reasons
+  are recorded in `PLAN.md`.
 - **T4 — Resolver: `move` on flat ground** — `resolve()` returns the whole
   stepped path, the landing and the outcome. Pure; a no-op direction resolves
   to the start tile rather than erroring, so T5 can decline to offer it.

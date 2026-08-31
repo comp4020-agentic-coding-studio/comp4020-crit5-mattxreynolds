@@ -1,6 +1,16 @@
 import { offers } from "./rules";
 import { type Run, currentLevel } from "./state";
-import { STEP, type Dir, type Level, type Pos, type Tile, isRamp, samePos } from "./types";
+import {
+  STEP,
+  type Dir,
+  type Level,
+  type Pos,
+  type Tile,
+  isRamp,
+  samePos,
+  step,
+  tileAt,
+} from "./types";
 
 /** State to HTML. The only file that knows a tile is three clip-path faces.
  *
@@ -48,13 +58,19 @@ function boardHTML(level: Level, run: Run, marks: Array<{ dir: Dir; move: unknow
   const fx = 2 / (cols + rows);
   const fy = 1 / ((cols + rows - 2) / 4 + 0.8);
 
-  const landing = new Map<string, Dir>();
+  // Markers sit on the tile *next to* the ball, not on the tile it would land
+  // on. They read as a direction chooser --- four arrows around the ball ---
+  // rather than as four destinations scattered at different distances.
+  const marked = new Map<string, Dir>();
   for (const mark of marks as Array<{ dir: Dir; move: { landing: Pos } }>) {
-    landing.set(key(mark.move.landing), mark.dir);
+    const next = step(run.ball, mark.dir);
+    // A jump can clear a gap, in which case there is no tile beside the ball
+    // to draw on; fall back to where it lands.
+    marked.set(key(tileAt(level, next) ? next : mark.move.landing), mark.dir);
   }
 
   const tiles = level.grid
-    .flatMap((row, r) => row.map((tile, c) => (tile ? tileHTML(tile, r, c, run, landing) : "")))
+    .flatMap((row, r) => row.map((tile, c) => (tile ? tileHTML(tile, r, c, run, marked) : "")))
     .join("");
 
   // Desaturating the board is the *lost* treatment --- it exists so the
@@ -73,9 +89,9 @@ function tileHTML(
   r: number,
   c: number,
   run: Run,
-  landing: Map<string, Dir>,
+  marked: Map<string, Dir>,
 ): string {
-  const dir = landing.get(key({ r, c }));
+  const dir = marked.get(key({ r, c }));
   const parts = [
     `<div class="fl"></div>`,
     `<div class="fr"></div>`,
@@ -87,9 +103,6 @@ function tileHTML(
     samePos(run.ball, { r, c }) && tile.terrain !== "hole"
       ? `<div class="shdw"></div><div class="ball"></div>`
       : "",
-    // Every offered tile gets an arrow, the hole included. Leaving it off the
-    // hole and relying on the white ring alone made L1 look unfinishable ---
-    // the ring reads as decoration, the arrow reads as "go here".
     dir ? `<div class="pl ar" style="--rot:${STEP[dir].rot}deg"><i class="tri"></i></div>` : "",
     `</div>`,
     // The hit target is its own diamond rather than the tile's box, which
