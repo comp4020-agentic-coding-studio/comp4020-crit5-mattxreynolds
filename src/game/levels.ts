@@ -207,6 +207,37 @@ function level9(): Level {
   };
 }
 
+/** L10: the ramp's run-up, then the jump the ramp cannot serve.
+ *
+ *  The ramp only reaches the plateau --- crossing it needs the run-up L6
+ *  taught, exactly (one tile short rolls back down the ramp; one tile long
+ *  runs off the plateau's far edge into the chasm beyond it, which is new).
+ *  From the plateau the hole is not straight across: two single tiles line
+ *  the ball up first, and only then does the arc card clear the gap no roll
+ *  could. */
+function level10(): Level {
+  const grid = field(4, 6);
+  for (let r = 0; r < 4; r++) {
+    grid[r][2] = { terrain: "ground", height: 0, ramp: "se" };
+    grid[r][3] = G(1);
+    grid[r][4] = null;
+    grid[r][5] = G(1);
+  }
+  grid[0][5] = HOLE(1);
+  return {
+    id: 10,
+    grid,
+    ball: { r: 2, c: 0 },
+    hand: [
+      { kind: "move", value: 1 },
+      { kind: "move", value: 2 },
+      { kind: "move", value: 1 },
+      { kind: "move", value: 1 },
+      { kind: "jump", value: 2 },
+    ],
+  };
+}
+
 /** The curve: move, then distance, then four directions with a wrong one among
  *  them, then a step that blocks, a step that doesn't, the ramp between them,
  *  then the card that ignores all of it, and last a level that wants two of
@@ -224,6 +255,7 @@ export const LEVELS: Level[] = [
   level7(),
   level8(),
   level9(),
+  level10(),
 ];
 
 export { field, G, HOLE };
