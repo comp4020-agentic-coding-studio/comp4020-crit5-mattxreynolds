@@ -40,7 +40,7 @@ lost — restart it and try again.
 | ground | the ball travels across it and stops where the card says | core |
 | raised tile | a climb: stops the ball dead at the tile before it (this is the old `wall`) | core |
 | sand | stops the ball dead the moment it enters | core |
-| ramp | joins two levels; the ball rolls down it and can never roll up | core |
+| ramp | joins two levels; the ball rolls up or down it, but can never come to rest on it | core |
 | hole | the level is won | core |
 | water | the ball is lost; it returns to the level's start tile, card still spent | **stretch** |
 
@@ -51,10 +51,10 @@ comes from. Water is the stretch because it is the most expensive tile to
 teach wordlessly — a ball that vanishes and reappears reads as a bug, not a
 rule — and it adds the least, being a climb that costs a card.
 
-**Card types:** `move` rolls along the ground, dropping down ledges but never
-climbing. `jump` arcs over whatever lies between and lands N tiles away, and is
-the only way up. Both are core — height is precisely the thing worth arcing
-over, so `jump` is no longer conditional.
+**Card types:** `move` rolls along the ground, dropping down ledges and taking
+ramps in either direction, but never climbing a sheer step. `jump` arcs over
+whatever lies between and lands N tiles away, reaching ground no ramp serves.
+Both are core, though `jump` is the more cuttable of the two.
 
 Exact resolution rules (height deltas, whether a drop preserves remaining
 movement, ramp chaining, stopping order) get pinned during the build by playing
@@ -83,10 +83,12 @@ says it without words. That is the most heavily weighted spec line.
 
 - **`wall` stops being a tile type.** A wall is just a tile one or more levels
   up, blocked by the same rule that blocks any climb. One fewer thing to teach.
-- **`slope` becomes the ramp between levels** — roll down it, never up —
-  replacing "keeps the ball sliding on flat ground".
-- **`jump` becomes core, not conditional.** Height is the thing worth arcing
-  over, so the second card type is no longer optional: it is the only way up.
+- **`slope` becomes the ramp between levels**, replacing "keeps the ball
+  sliding on flat ground". A ball can roll *up* a ramp as well as down, but it
+  can never stop on one — it must have the steps to clear it.
+- **`jump` stays core, but it is no longer the *only* way up.** Ramps are the
+  ordinary way up; `jump` reaches what no ramp serves, and clears what is in
+  the way. See the note on its scope under "Where this is at risk".
 - **The resolver compares heights at every step.** Higher blocks, equal
   continues, lower drops. Whether a ball keeps its remaining movement after a
   drop is exactly the sort of rule to pin by playing the original.
@@ -149,6 +151,79 @@ not to `design`:
 - **Three hand layouts across four states** (single card, rotated fan, flat row).
   Pick one.
 
+## Build decisions
+
+**One page, no routes.** `src/pages/index.astro` is the whole site. Every state
+(level, lost, run finished) is the same page in a different state — a second
+page would read as an instructions page to `spec/crit-5.test.ts`, and there is
+nothing to put on one. The invariants still need a `<nav>` landmark and exactly
+one `<h1>`; both are visually hidden, since the game carries no words.
+
+**Module layout.** The engine is pure and DOM-free so it can be unit-tested
+without a browser:
+
+| file | holds |
+| --- | --- |
+| `src/game/types.ts` | `Level`, `Tile`, `Card`, `Move`, `Outcome` |
+| `src/game/levels.ts` | the shipped level set, as data |
+| `src/game/validate.ts` | level integrity, including the vertex-height rule |
+| `src/game/rules.ts` | `resolve(level, from, card, dir)` — pure, the whole engine |
+| `src/game/state.ts` | run state: current level, hand, restart count |
+| `src/game/render.ts` | state → DOM; the only file that knows about tiles as HTML |
+| `src/scripts/main.ts` | wiring: events in, render out |
+
+**Resolution rules, pinned.** `PLAN.md` previously deferred these to "playing
+the original". We do not have it to hand, so they are decided here and the game
+is tuned by playing *ours*. A `move` card of value N in direction d takes up to
+N steps, and at each step, from the current tile to the next:
+
+- next is off the board → stop where you are, card still spent
+- next is **higher**, with no ramp → blocked, stop where you are (the climb
+  rule)
+- next is **lower** → the ball drops onto it and **keeps its remaining steps**
+- next is **level** → continue
+- next is **sand** → the ball enters and stops dead, remaining steps discarded
+- next is **the hole** → the level is won
+- a **ramp** can be taken in either direction, but **a ball never comes to rest
+  on a ramp**:
+  - *going up* — allowed only if the remaining steps are enough to leave the
+    ramp at the top. If they are not, the ball stops at the tile before the
+    ramp, exactly as a climb blocks it. The card is still spent, so failing a
+    climb is a real wrong move.
+  - *going down* — always allowed. If the steps run out mid-ramp the ball
+    keeps rolling to the foot of the ramp and stops there; gravity finishes the
+    move at no extra cost.
+  - a ramp spanning several tiles follows the same rule: the ball must be able
+    to clear every ramp tile and land on something level.
+
+A `jump` card of value N lands the ball exactly N tiles away in direction d,
+ignoring everything between and ignoring height in both directions. It is not
+the only way up — ramps are — but it is the only way onto ground no ramp
+reaches, and the only way over something in the way. If the landing tile is off the board the direction is not offered.
+
+**Only offer a direction that moves the ball.** A direction whose resolved
+landing equals the start tile is not shown. A stranger tapping an arrow and
+seeing nothing happen reads the game as broken. Wrong moves stay possible —
+plenty of legal moves waste a card — so this does not soften "it can be lost".
+
+**Markers sit on the landing tile,** not the adjacent one. This is the design
+critic's open finding and it is why the resolver has to exist before the
+markers do: a card reading `2` whose marker lands two tiles away teaches the
+numeral for free, with no words.
+
+**The ball animates along its path** — one CSS transform transition per step,
+queued. A ball that teleports doesn't show *why* it stopped, and every rule
+here is about where it stops.
+
+**No persistence.** Restart count lives in memory for the run. Reloading starts
+a fresh run; that is the intended way to try for a better score.
+
+**Test policy.** Tests are written alongside the task that implements the thing
+they test, and passing them is part of that task's completion condition — not a
+separate pass at the end. The engine is pure, so it is tested directly; the
+render and wiring are tested through the built DOM the way the spec suite
+already does.
+
 ## Losing, and the score
 
 **The loss is level-scale.** Spend the hand without holing the ball and the
@@ -177,14 +252,20 @@ is the right call anyway, since the overlay has to be as wordless as the rest.
   heavily-weighted, least-fakeable line. Early levels should feel almost too
   easy.
 - **Teaching budget — now the top risk.** Height adds three things to teach
-  wordlessly (can't roll up, can roll down, jump gets you up) on top of the
-  tile types, in the same 6–8 levels. This was flagged as the main cost of
+  wordlessly (a sheer step blocks you, a ramp doesn't but you need the run-up
+  to clear it, and `jump` reaches what neither does) on top of the tile types,
+  in the same 6–8 levels. This was flagged as the main cost of
   taking on the full height model, and accepted deliberately. Teaching levels
   must double as real puzzles, and if the curve slips it is the level count
   that gets cut, not the opening's gentleness.
 - **Engine scope against the cutoff.** Two card types and a height-aware
   resolver is materially more than the flat design was. Build order stays
   engine-first so a playable game is always deployed.
+- **`jump` may not earn its keep.** Once ramps became climbable, the ordinary
+  way up stopped being `jump`, and it now only pays for itself on levels that
+  need to reach ground no ramp serves. It is a second traversal algorithm and a
+  second card glyph to teach wordlessly. If the schedule slips, `jump` is the
+  first thing to cut — ahead of the level count.
 - **Restart discoverability.** A stranger *will* get stuck, and the restart
   has to be findable without words before they conclude the game is broken.
 - **Level design is the real work**, not the engine.
@@ -203,10 +284,11 @@ climbs → ramps → jump → sand → water if time allows.
 - it can be lost; play ends in a win, a loss or a finish
 - it teaches itself — no instructions anywhere, on screen or off
 - a stranger reaches an ending inside five minutes
-- **one rule under a focused automated test** — candidate: *a `move` card
-  never climbs: the ball stops at the tile before a higher one*, or *a hand
-  spent without holing the ball loses the level and increments the restart
-  count*
+- **one rule under a focused automated test** — *a ball never comes to rest on
+  a ramp*: too few steps to clear one going up and it stops at the foot; steps
+  running out going down and it rolls on to the bottom. This is the game's most
+  interesting rule and the one most easily got wrong, which is what makes it
+  worth the test
 - **one change that came from playing the finished game**, not from reading its
   code
 - incremental commits, `PROCESS.md`, and `reflections/crit-5.md`
