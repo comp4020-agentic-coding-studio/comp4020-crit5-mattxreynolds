@@ -20,6 +20,14 @@ interface Settled {
   w: number;
 }
 
+/** `?level=3` opens that level directly. A working affordance, not a feature:
+ *  it is how a level gets looked at after a change without playing up to it.
+ *  Nothing on screen mentions it, so a cold player never meets it. */
+function requestedLevel(): number {
+  const asked = Number(new URLSearchParams(window.location.search).get("level"));
+  return Number.isFinite(asked) && asked > 0 ? asked - 1 : 0;
+}
+
 const mount = document.getElementById("game");
 if (mount) start(mount);
 
@@ -27,12 +35,17 @@ if (mount) start(mount);
  *  handlers below are closures and TypeScript won't carry the narrowing into
  *  them. */
 function start(root: HTMLElement): void {
-  let run: Run = startRun(LEVELS);
+  const opened = requestedLevel();
+  let run: Run = startRun(LEVELS, opened);
   let busy = false;
 
   const paint = (): void => {
     root.innerHTML = screenHTML(run);
   };
+
+  // The server already rendered level 1, so the only reason to paint on load
+  // is having been asked for a different one.
+  if (opened > 0) paint();
 
   root.addEventListener("click", (event) => {
     if (busy) return;
@@ -188,7 +201,4 @@ function start(root: HTMLElement): void {
       setTimeout(done, ms);
     });
 
-  // The server already rendered the opening board, so the first paint only
-  // happens when something changes --- the page is playable-looking with no
-  // JavaScript, and identical once it loads.
 }

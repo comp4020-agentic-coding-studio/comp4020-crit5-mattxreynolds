@@ -129,7 +129,13 @@ not a floor, and the opening curve should be close to insultingly gentle.
   apart by height, fill and stipple. A direction marker is one filled arrow
   lying in the ground plane, sized to stay inside its own tile: split into a
   separate stem and head it comes apart under the shear, and a bare triangle
-  reads as a wedge aimed at the ball rather than a heading. The only glyphs are
+  reads as a wedge aimed at the ball rather than a heading. On a ramp it leans
+  into the slope — *partly*: a ramp is close to edge-on at this camera, so an
+  arrow lying in the plane exactly collapses into an unreadable sliver, the
+  same way the ramp's own surface nearly does. It leans about half as far as
+  the terrain does, which reads as following the slope while staying an arrow.
+  A marker also carries a white keyline, sized off the tile, so it survives
+  being drawn over the cup or over raised ground. The only glyphs are
   numerals, the card's move/jump mark, and the restart arrow.
 
 ## What the design critic still has open
@@ -240,6 +246,12 @@ shown --- so the resolver still has to exist before the markers do.
 **The ball animates along its path** — one CSS transform transition per step,
 queued. A ball that teleports doesn't show *why* it stopped, and every rule
 here is about where it stops.
+
+**`?level=N` opens a level directly.** A working affordance, not a feature:
+it is how a level gets looked at after a change without playing up to it.
+Nothing on screen mentions it, so a cold player never meets it, and the run it
+starts is a whole run — it plays on to the end and scores its restarts the
+same way.
 
 **No persistence.** Restart count lives in memory for the run. Reloading starts
 a fresh run; that is the intended way to try for a better score.

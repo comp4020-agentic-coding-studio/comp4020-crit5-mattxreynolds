@@ -265,12 +265,39 @@ main {
    not round numbers. */
 .sl {
   --rmax: var(--lift);
+  /* How far the arrow leans into the slope, as a fraction of the iso
+     half-step. True to the terrain would be 0.6 --- one level of rise
+     (--lift, 0.3w) over one tile of travel (w/2). It is deliberately less.
+     A ramp climbs 0.3w across a tile that only drops 0.25w on screen, so its
+     surface is very close to edge-on: at 0.6 the arrow lies in the plane
+     exactly and collapses into an unreadable sliver, the same way the ramp's
+     own surface does. 0.3 reads as leaning up the slope while staying an
+     arrow, which is the job it has. */
+  --tilt: 0.3;
 }
 
 .sl-se { --re: var(--lift); --rs: var(--lift); }
 .sl-nw { --rn: var(--lift); --rw: var(--lift); }
 .sl-sw { --rw: var(--lift); --rs: var(--lift); }
 .sl-ne { --rn: var(--lift); --re: var(--lift); }
+
+/* An arrow on a ramp leans into the slope rather than lying flat across it.
+
+   The flat shear maps one tile of travel to (w/2, w/4) on screen. On a ramp
+   that same tile of travel also changes height, so the vertical half of one
+   basis vector shifts by --tilt. Which basis vector moves depends on whether
+   the ramp climbs along c or along r, and the sign on whether it climbs with
+   the axis or against it. See --tilt for why it is not the true angle. */
+.sl-se .pl.ar { transform: matrix(1, calc(0.5 - var(--tilt)), -1, 0.5, 0, 0) rotate(var(--rot)); }
+.sl-nw .pl.ar { transform: matrix(1, calc(0.5 + var(--tilt)), -1, 0.5, 0, 0) rotate(var(--rot)); }
+.sl-sw .pl.ar { transform: matrix(1, 0.5, -1, calc(0.5 - var(--tilt)), 0, 0) rotate(var(--rot)); }
+.sl-ne .pl.ar { transform: matrix(1, 0.5, -1, calc(0.5 + var(--tilt)), 0, 0) rotate(var(--rot)); }
+
+/* Slightly wider and thicker on a slope, to survive the foreshortening. */
+.sl .tri {
+  width: calc(var(--w) * 0.46);
+  height: calc(var(--w) * 0.3);
+}
 
 /* Anything standing on a ramp stands halfway up it, not at its foot --- the
    same half-level the ball animates at. It also carries the marker up and away

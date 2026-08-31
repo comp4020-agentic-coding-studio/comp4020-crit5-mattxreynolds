@@ -29,6 +29,21 @@ describe("a run", () => {
   });
 });
 
+describe("opening a level directly", () => {
+  it("starts on the level asked for, still knowing about the rest", () => {
+    const run = startRun(LEVELS, 2);
+    expect(currentLevel(run).id).toBe(LEVELS[2].id);
+    expect(run.levels.length).toBe(LEVELS.length);
+    expect(run.ball).toEqual(LEVELS[2].ball);
+  });
+
+  it("clamps anything the URL might hand it", () => {
+    expect(startRun(LEVELS, -4).index).toBe(0);
+    expect(startRun(LEVELS, 999).index).toBe(LEVELS.length - 1);
+    expect(startRun(LEVELS, Number.NaN).index).toBe(0);
+  });
+});
+
 describe("arming a card", () => {
   const run = startRun([lane([{ kind: "move", value: 2 }, { kind: "move", value: 1 }])]);
 

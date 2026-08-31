@@ -26,10 +26,15 @@ export function currentLevel(run: Run): Level {
   return run.levels[run.index];
 }
 
-export function startRun(levels: Level[]): Run {
+/** Start a run. `at` is a zero-based level index --- it exists so a level can
+ *  be opened directly while working on it, and is clamped rather than trusted,
+ *  since it comes from the URL. A run started partway through is still a whole
+ *  run: it plays on to the end and scores its restarts the same way. */
+export function startRun(levels: Level[], at = 0): Run {
+  const index = Math.min(Math.max(Math.trunc(at) || 0, 0), levels.length - 1);
   return enter(
-    { levels, index: 0, ball: levels[0].ball, spent: [], armed: null, restarts: 0, phase: "play" },
-    0,
+    { levels, index, ball: levels[0].ball, spent: [], armed: null, restarts: 0, phase: "play" },
+    index,
   );
 }
 
