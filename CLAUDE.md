@@ -41,6 +41,11 @@ you're in) --- see each skill for its procedure.
 - Before you push, run `pnpm check` --- typecheck (`astro check`), build, and
   vitest (the spec suite plus your own tests). That's the whole local loop;
   see "The checks" below for what CI adds on top.
+- `agent-browser` sets its viewport with `set viewport <w> <h>`, as two
+  arguments. The `--viewport 1920x1080` flag shape is silently ignored --- you
+  get the default window and a screenshot that looks plausible at the wrong
+  size. Confirm with `eval "innerWidth+'x'+innerHeight"` before trusting a
+  screenshot taken to check a viewport-specific layout.
 - Open the rendered page in a browser (the `agent-browser` CLI, documented on
   [the course site](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/backpressure/#agent-browser-the-rendered-page-as-ground-truth))
   before trusting a mental model of it --- the rendered page is the truth.

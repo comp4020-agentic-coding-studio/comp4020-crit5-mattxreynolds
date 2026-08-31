@@ -35,25 +35,6 @@ private. T5 is where that gets discovered, not the morning of the cutoff.
 
 ## Backlog
 
-### T1 — Page shell and the visual contract in `src/`
-
-Port the validated slice out of `docs/design/iso-slice.html` into real source.
-The CSS is proven against two critiques; this is a port, not a redesign.
-
-- `src/pages/index.astro`: one page, real `<title>` and `meta description`,
-  `og:image`, mobile viewport, `lang`. A visually-hidden `<h1>` and `<nav>` —
-  the invariants require both and the game carries no words.
-- `src/styles/styles.css`: contract tokens (`--s1`…`--s6`, palette, `--w`,
-  `--cw`), the isometric tile faces, cards, gutter bar.
-- Renders one hard-coded level statically. No interaction yet.
-
-**Done when:** `pnpm check` is green, and the built page shows the level-1 board
-correctly at 1920×1080 and 390×844.
-
-**Acceptance:** invariants pass. `spec/crit-5.test.ts` passes — no modal, no
-`role="dialog"`, no instruction words in `main`. Rendered board matches the
-contract's palette and the "higher ground is darker" convention.
-
 ### T2 — Evidence gate *(independent)*
 
 `pnpm check:evidence` currently fails four ways and it **gates `deploy`**, so
@@ -239,7 +220,7 @@ be done early — it needs the finished game.
 
 ## Done
 
-*(empty — the design slice at `docs/design/iso-slice.html` is deliberately
-**not** seeded here. It validated the visual contract against two critiques,
-but it is a standalone file: `src/` is still the untemplated starter, so T1 is
-a real port, not a formality.)*
+- **T1 — Page shell and the visual contract in `src/`** — `1e61c99` (port),
+  `6f6e72d` (tests, committed red). The slice's geometry and palette moved
+  across unchanged; board sizing now derives from the level's own `--cols`
+  and `--rows`. Verified rendered at both viewports.
