@@ -35,48 +35,17 @@ private. T5 is where that gets discovered, not the morning of the cutoff.
 
 ## Backlog
 
-### T6 — Three flat levels, then ship
+### T12 — Link-preview card *(independent)*
 
-Three `move`-only levels: L1 is the ball, the hole two tiles away, one card.
-
-Then flip the repo public and deploy — `/comp4020:ship`.
-
-**Done when:** the deployed GitHub Pages URL serves a playable game and CI is
-green.
-
-**Acceptance:** CI actually *runs* (jobs are no longer `skipped` — note a
-skipped run still exits 0 under `gh run watch`, so check the run's conclusion,
-not the exit code). Links check and secrets scan pass, both of which have never
-executed on this repo. A stranger can finish L1 without being told anything.
-
-### T12 — Link-preview card and description *(independent)*
-
-Replace `public/card.png` (1200×630) with a real render of the game, and the
-`meta description` with one sentence saying what this is.
+`meta description` and the title are done (`027096c` — "Forethought", one
+sentence). `public/card.png` is still the Astro starter's placeholder
+("Replace this card") — swap it for a real screenshot of the game.
 
 **Done when:** the card is a screenshot of the actual game and the deployed
 `<head>` points at a URL that resolves.
 
 **Acceptance:** nothing in CI checks that the card path resolves, so verify it
 against the deployed page, not the local build.
-
-### T13 — Play it, then change one thing because of playing it
-
-The spec asks for **one change that came from playing the finished game**, not
-from reading its code. Play the deployed build cold, at both viewports, and fix
-the thing that most gets in the way.
-
-Candidates so far, all found by playing rather than by reading — but all found
-before the game was finished, so T13 still needs its own:
-the click-through bug where a tile in front swallowed taps meant for the tile
-behind, the ball hiding the cup it had just gone into, and the failed climb
-that used to hide its own arrow instead of rolling up the slope and back.
-
-**Done when:** the change is committed with a message saying what playing it
-revealed.
-
-**Acceptance:** the change is traceable to play, not to code review. This cannot
-be done early — it needs the finished game.
 
 ---
 
@@ -92,42 +61,32 @@ be done early — it needs the finished game.
 
 ---
 
-## Polish
-
-- **Revisit `PROCESS.md` and `reflections/crit-5.md` at the end.** Both were
-  written at T2 because `check:evidence` gates `deploy`, so they cover the
-  design phase and nothing after it. The moment that comes out of T13 —
-  playing the finished game — is the one most likely to be worth citing, and
-  it doesn't exist yet.
-- **Candidate `PROCESS.md` moment (for the final revisit):** `clip-path`
-  clips an element's own `filter` output, so the white keyline that makes a
-  marker readable over the cup had to move to the unclipped parent. Found by
-  screenshotting, after the outline appeared correctly in computed styles and
-  not at all on the page.
-- **A raised tile hides what is behind it.** Correct isometric occlusion ---
-  painting order is r+c --- but it means a ball resting *behind* a raised slab
-  is half-covered by the thing that stopped it. L4 works around it by having
-  the ball approach from the front. If a later level can't, the ball needs a
-  treatment of its own rather than the level being bent around it.
-- **Composition differs between the two viewports.** Desktop leaves a large
-  dead field around a small board, and on the phone the board sits high with
-  the field empty below it. (The related centring bug is fixed: the board's
-  box now includes the headroom raised ground needs, so it centres on its own
-  ink rather than on the flat rectangle underneath it.)
-  This is the design critic's third open finding in `PLAN.md`, and it needs
-  different treatments per viewport rather than one shared cap.
-- **L1 teaches the numeral only in one direction.** The ball starts at the
-  board's edge, so two of the three offered directions land one tile away
-  (stopped by the rim) while the card reads `2`. Correct, and it teaches the
-  edge rule — but it works against the numeral teaching itself on the very
-  first screen. Worth reshaping when T10 revisits the curve.
-- *(the rest populated by review against the spec once the backlog is built,
-  per the `working-loop` convention — not specified in advance)*
-
----
-
 ## Done
 
+- **T13 — Play it, then change one thing because of playing it** — `cb11594`
+  first clarified the direction controls (markers animate out from the ball,
+  a translucent backing, arrow-key/WASD focus with Enter/Escape to
+  confirm/cancel). Playing the result cold then caught what no unit test
+  could: the other three markers stayed on the board looking selectable while
+  the ball was already rolling toward the fourth. `e4a1d9a` removes the whole
+  selector the instant a choice is confirmed and restores it only once the
+  roll — or the bounce off a blocked move — resolves. The change is traceable
+  to play, not to reading the code.
+- **Audio and brand** — `0bcfcdd` adds an original procedural soundtrack and
+  distinct cues for selection, rolling, blocked moves, sand, falls, loss,
+  holes and completion; off by default, on only after a user gesture, an
+  explicit preference remembered. `027096c` renames the game *Forethought*
+  and adds a matching favicon, resolved through Astro's base path so it
+  doesn't 404 under the Pages subdirectory.
+- **Feedback and motion polish** — `90afdba` distinguishes progress, failure
+  and finish states; `6f88b36` makes every jump direction resolve (an empty
+  landing falls, a ramp landing rolls to its foot) and gives a blocked roll a
+  squash-and-rebound instead of a silent no-op; `1ea7980` fans every hand
+  symmetrically from two to six cards with hover/focus states and separate
+  assistive labels for move and jump; `649e3e7` gives level entry, dealing,
+  scoring, landing and completion a shared motion language with a
+  reduced-motion fallback, and splits sand stops out from blocked-wall
+  rebounds as their own result.
 - **Falling edges, four combined levels, a live restart counter** — `0f24917`/
   `0982824` make the edge a fall rather than a wall (`"fell"` joins
   `Outcome`; the card is still spent, and `solve()`/`losable()` treat it as a
@@ -167,6 +126,9 @@ be done early — it needs the finished game.
 - **T7 — Resolver: height** — the climb rule stops the ball at the tile before
   a step up, of any size; a drop keeps the steps it has left, so a staircase is
   one-way. A blocked direction isn't offered.
+- **T6 — Three flat levels, then ship** — `2036eb3` ships three `move`-only
+  levels with win and lose proven by test; the repo went public and deployed
+  right after, and CI ran — and passed — for the first time.
 - **T5 — Wiring, render and the direction markers** — one renderer shared by
   the Astro build and the browser, so the page ships a real board rather than
   an empty div. The roll is animated; win, loss and restart all work at both
