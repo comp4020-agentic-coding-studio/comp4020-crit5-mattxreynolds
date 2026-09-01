@@ -21,6 +21,8 @@ import {
  *  what appears on screen is testable without a browser. */
 
 const RESTART_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v6h-6"></path></svg>`;
+const MUSIC_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l10-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="16" cy="16" r="3"></circle></svg>`;
+const SOUND_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9H2v6h3l5 4V5L5 9Z"></path><path d="M14 9a4 4 0 0 1 0 6M16.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg>`;
 
 export function screenHTML(run: Run): string {
   const level = currentLevel(run);
@@ -67,7 +69,16 @@ function gutter(run: Run, level: boolean, action: boolean): string {
   const tally = level
     ? `<span class="tally run-tally"><span class="tally-mark" aria-hidden="true">${RESTART_ICON}</span><span class="tally-num">${run.restarts}</span></span>`
     : "";
-  return `${bar}${tally}`;
+  return `${bar}${tally}${audioControlsHTML()}`;
+}
+
+function audioControlsHTML(): string {
+  return [
+    `<div class="audio-controls" aria-label="Audio controls">`,
+    `<button class="audio-toggle" type="button" data-audio="music" aria-label="Turn music on" aria-pressed="false">${MUSIC_ICON}</button>`,
+    `<button class="audio-toggle" type="button" data-audio="effects" aria-label="Turn sound effects off" aria-pressed="true">${SOUND_ICON}</button>`,
+    `</div>`,
+  ].join("");
 }
 
 /** The run's shape, always visible: twelve positions rather than a percentage

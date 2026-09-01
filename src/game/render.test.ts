@@ -39,6 +39,16 @@ describe("the board", () => {
   });
 });
 
+describe("audio controls", () => {
+  const doc = dom(screenHTML(startRun(LEVELS)));
+
+  it("offers separate music and sound-effect toggles", () => {
+    expect(doc.querySelectorAll("[data-audio]").length).toBe(2);
+    expect(doc.querySelector("[data-audio='music']")?.getAttribute("aria-pressed")).toBe("false");
+    expect(doc.querySelector("[data-audio='effects']")?.getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
 describe("direction markers", () => {
   // Markers are a direction chooser: four arrows on the tiles around the ball,
   // not four destinations scattered at whatever distance each card reaches.

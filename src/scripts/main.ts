@@ -3,6 +3,7 @@ import { screenHTML } from "../game/render";
 import { resolve } from "../game/rules";
 import { type Run, arm, currentLevel, playCard, restart, startRun } from "../game/state";
 import { STEP, type Dir, type Pos, isRamp } from "../game/types";
+import { GameAudio } from "./audio";
 
 // Wiring: events in, render out. Everything it decides, it asks the engine.
 
@@ -39,6 +40,16 @@ function start(root: HTMLElement): void {
   const opened = requestedLevel();
   let run: Run = startRun(LEVELS, opened);
   let busy = false;
+  const audio = new GameAudio();
+
+  const syncAudioControls = (): void => {
+    for (const button of root.querySelectorAll<HTMLButtonElement>("[data-audio]")) {
+      const kind = button.dataset.audio as "music" | "effects";
+      const enabled = kind === "music" ? audio.music : audio.effects;
+      button.setAttribute("aria-pressed", String(enabled));
+      button.setAttribute("aria-label", `Turn ${kind === "music" ? "music" : "sound effects"} ${enabled ? "off" : "on"}`);
+    }
+  };
 
   const placeHand = (): void => {
     const screen = root.querySelector<HTMLElement>(".screen");
@@ -66,6 +77,7 @@ function start(root: HTMLElement): void {
 
   const paint = (): void => {
     root.innerHTML = screenHTML(run);
+    syncAudioControls();
     placeHand();
   };
 
@@ -77,14 +89,28 @@ function start(root: HTMLElement): void {
   // The server already rendered level 1, so the only reason to paint on load
   // is having been asked for a different one.
   if (opened > 0) paint();
-  else placeHand();
+  else {
+    syncAudioControls();
+    placeHand();
+  }
   enter("booting");
   window.addEventListener("resize", placeHand);
 
   root.addEventListener("click", (event) => {
-    if (busy) return;
     const target = event.target as Element | null;
     if (!target) return;
+    void audio.unlock();
+
+    const audioButton = target.closest<HTMLButtonElement>("[data-audio]");
+    if (audioButton) {
+      const kind = audioButton.dataset.audio as "music" | "effects";
+      audio.toggle(kind);
+      syncAudioControls();
+      if (kind === "effects" && audio.effects) audio.play("select");
+      return;
+    }
+
+    if (busy) return;
 
     const restartButton = target.closest("[data-act='restart']");
     if (restartButton) {
@@ -95,6 +121,7 @@ function start(root: HTMLElement): void {
     const card = target.closest<HTMLElement>("[data-card]");
     if (card) {
       run = arm(run, Number(card.dataset.card));
+      audio.play("select");
       paint();
       return;
     }
@@ -105,6 +132,7 @@ function start(root: HTMLElement): void {
 
   async function restartLevel(): Promise<void> {
     busy = true;
+    audio.play("restart");
     await leaveScreen(180);
     // Once the run is over this starts a new one from the top; otherwise the
     // tally ticks up while the same level resets beneath stationary chrome.
@@ -137,28 +165,39 @@ function start(root: HTMLElement): void {
     // not: the ball leans that way, finds it cannot, and settles back, and the
     // hand is untouched.
     if (move.path.length < 2) {
+      audio.play("blocked");
       await nudge(dir);
       busy = false;
       return;
     }
+    audio.play("roll");
     const settled = await roll(
       move.path,
       level.hand[index].kind === "jump",
       move.outcome !== "fell",
     );
-    if (move.blocked) await bump(dir, settled);
-    if (move.stoppedBy === "sand") await sandStop(settled);
+    if (move.blocked) {
+      audio.play("blocked");
+      await bump(dir, settled);
+    }
+    if (move.stoppedBy === "sand") {
+      audio.play("sand");
+      await sandStop(settled);
+    }
     const spent = spendCard(index);
     if (move.outcome === "holed") {
+      audio.play(run.index === run.levels.length - 1 ? "finish" : "hole");
       await Promise.all([sink(settled), spent, completeProgress()]);
       await wait(motion(80));
       await leaveScreen(160);
     } else if (move.outcome === "fell") {
+      audio.play("fall");
       await Promise.all([fallAway(settled), spent]);
     } else {
       await spent;
     }
     run = playCard(run, index, move);
+    if (run.phase === "lost") audio.play("fail");
     if (move.outcome === "holed") root.classList.add("entering");
     paint();
     if (move.outcome === "holed") {
