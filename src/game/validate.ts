@@ -1,10 +1,12 @@
 import {
   type Level,
+  type Pos,
   cornerHeights,
   holeOf,
   isRamp,
   tileAt,
 } from "./types";
+import { offers } from "./rules";
 
 /** Everything wrong with a level, as sentences an author can act on. An empty
  *  array means the level is shippable.
@@ -85,7 +87,48 @@ export function validateLevel(level: Level): string[] {
   }
 
   problems.push(...tornVertices(level));
+  if (ball && !isRamp(ball) && ball.terrain !== "hole" && holes.length === 1) {
+    problems.push(...holeAdjacencyProblems(level));
+  }
   return problems;
+}
+
+/** Reach every position the real game can settle on with every remaining-hand
+ * combination. Geometric adjacency alone is not an error: a tile beside the
+ * cup may exist for a winning path to cross. It is only invalid when a
+ * non-winning resolution can actually leave the ball resting there. */
+export function holeAdjacencyProblems(level: Level): string[] {
+  const hole = holeOf(level);
+  if (!hole) return [];
+
+  const adjacent = (p: Pos): boolean =>
+    Math.abs(p.r - hole.r) + Math.abs(p.c - hole.c) === 1;
+  const problems = new Set<string>();
+  const seen = new Set<string>();
+
+  const visit = (ball: Pos, unspent: number[], route: string[]): void => {
+    const key = `${ball.r},${ball.c}|${unspent.join(",")}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    if (unspent.length > 0 && adjacent(ball)) {
+      problems.add(
+        `level ${level.id}: reachable non-winning rest at (${ball.r},${ball.c}) is adjacent to the hole at (${hole.r},${hole.c}) via ${route.join(" -> ") || "the start"}`,
+      );
+    }
+
+    for (const card of unspent) {
+      const remaining = unspent.filter((index) => index !== card);
+      for (const { dir, move } of offers(level, ball, level.hand[card])) {
+        if (move.outcome !== "stopped") continue;
+        const played = `${level.hand[card].kind}${level.hand[card].value} ${dir}`;
+        visit(move.landing, remaining, [...route, played]);
+      }
+    }
+  };
+
+  visit(level.ball, level.hand.map((_, index) => index), []);
+  return [...problems].sort();
 }
 
 /** Vertices where the tiles meeting them disagree about the height.

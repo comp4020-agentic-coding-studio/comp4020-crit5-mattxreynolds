@@ -49,7 +49,7 @@ describe("the board", () => {
   const shape = () => board().getAttribute("style") ?? "";
 
   it("declares the shape its own sizing formula reads", () => {
-    for (const name of ["--cols", "--rows", "--fx", "--fy"]) {
+    for (const name of ["--cols", "--rows", "--min-q", "--span-x", "--fx", "--fy"]) {
       expect(shape(), `the board's inline style is missing ${name}`).toContain(name);
     }
   });

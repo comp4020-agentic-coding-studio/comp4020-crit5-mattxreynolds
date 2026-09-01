@@ -39,6 +39,16 @@ describe("the board", () => {
   });
 });
 
+describe("sparse board bounds", () => {
+  it("sizes level 12 to occupied horizontal extents rather than empty grid corners", () => {
+    const doc = dom(screenHTML(startRun(LEVELS, 11)));
+    const shape = doc.querySelector(".board")?.getAttribute("style") ?? "";
+    expect(shape).toContain("--min-q:-4");
+    expect(shape).toContain("--span-x:13");
+    expect(shape).not.toContain("--span-x:16");
+  });
+});
+
 describe("audio controls", () => {
   const doc = dom(screenHTML(startRun(LEVELS)));
 
