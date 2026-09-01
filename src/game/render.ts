@@ -188,20 +188,18 @@ function markerLayer(level: Level, run: Run, marked: Marker[]): string {
       const neighbourHeight = tile
         ? tile.height + (isRamp(tile) ? 0.5 : 0)
         : standingHeight;
-      // A direction leaving high ground stays at the ball's elevation rather
-      // than dropping its control onto a lower flat neighbour. A ramp whose
-      // high edge meets that ground is different: travelling opposite its
-      // climb direction means going down the slope, so its control belongs on
-      // the ramp plane itself.
+      // A direction leaving high ground stays flat at the ball's elevation,
+      // whether the lower neighbour is flat or a slope descending away from
+      // it. Uphill arrows still belong to the slope plane itself.
       const descendsRamp =
         tile &&
         isRamp(tile) &&
         dir === opposite(tile.ramp) &&
         standingHeight === topHeight(tile);
       const height = descendsRamp
-        ? neighbourHeight
+        ? standingHeight
         : Math.max(standingHeight, neighbourHeight);
-      const slope = tile && isRamp(tile) ? ` sl sl-${tile.ramp}` : "";
+      const slope = tile && isRamp(tile) && !descendsRamp ? ` sl sl-${tile.ramp}` : "";
       const place = `--r:${cell.r};--c:${cell.c};--lv:${height}`;
 
       return [

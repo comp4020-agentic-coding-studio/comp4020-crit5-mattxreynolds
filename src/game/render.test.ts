@@ -137,7 +137,7 @@ describe("direction markers", () => {
     expect(raised.querySelector(".dir-se")?.getAttribute("style")).toContain("--lv:1");
   });
 
-  it("keeps a downhill marker on the ramp plane", () => {
+  it("draws a downhill marker flat at the ball's current height", () => {
     const level: Level = {
       id: 1,
       grid: [[
@@ -150,6 +150,24 @@ describe("direction markers", () => {
     };
     const downhill = dom(screenHTML(arm(startRun([level]), 0)));
     const marker = downhill.querySelector(".dir-nw");
+    expect(marker?.classList.contains("sl-se")).toBe(false);
+    expect(marker?.classList.contains("sl")).toBe(false);
+    expect(marker?.getAttribute("style")).toContain("--lv:1");
+  });
+
+  it("keeps an uphill marker on the ramp plane", () => {
+    const level: Level = {
+      id: 1,
+      grid: [[
+        { terrain: "ground", height: 0 },
+        { terrain: "ground", height: 0, ramp: "se" },
+        { terrain: "hole", height: 1 },
+      ]],
+      ball: { r: 0, c: 0 },
+      hand: [{ kind: "move", value: 1 }],
+    };
+    const uphill = dom(screenHTML(arm(startRun([level]), 0)));
+    const marker = uphill.querySelector(".dir-se");
     expect(marker?.classList.contains("sl-se")).toBe(true);
     expect(marker?.getAttribute("style")).toContain("--lv:0.5");
   });
