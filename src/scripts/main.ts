@@ -202,6 +202,10 @@ function start(root: HTMLElement): void {
     const move = resolve(level, run.ball, level.hand[index], dir);
 
     busy = true;
+    // The choice has been made. Leaving the other three controls on the board
+    // while the ball travels makes them look like mid-move alternatives, so
+    // clear the whole selector until the resulting state is ready.
+    root.querySelectorAll(".mk").forEach((marker) => marker.remove());
 
     // Every direction is offered now, and some of them are walls. A card is
     // spent when the ball *moves* --- rolling up a ramp and back down counts,
@@ -211,6 +215,8 @@ function start(root: HTMLElement): void {
     if (move.path.length < 2) {
       audio.play("blocked");
       await nudge(dir);
+      paint();
+      focusAfterPaint(`[data-dir='${dir}']`);
       busy = false;
       return;
     }
