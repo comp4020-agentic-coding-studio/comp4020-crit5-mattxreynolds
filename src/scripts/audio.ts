@@ -5,7 +5,8 @@ interface AudioSettings {
   effects: boolean;
 }
 
-const SETTINGS_KEY = "card-golf-audio";
+const SETTINGS_KEY = "forethought-audio";
+const LEGACY_SETTINGS_KEY = "card-golf-audio";
 // An original D-major/add9 progression. The roomy chords, sparse piano-like
 // notes and quiet pulse borrow the soundtrack's broad ambient/downtempo
 // vocabulary without borrowing any of its melodies.
@@ -173,7 +174,8 @@ export class GameAudio {
 
   private readSettings(): AudioSettings {
     try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "null") as Partial<AudioSettings> | null;
+      const stored = localStorage.getItem(SETTINGS_KEY) ?? localStorage.getItem(LEGACY_SETTINGS_KEY);
+      const saved = JSON.parse(stored ?? "null") as Partial<AudioSettings> | null;
       return { music: saved?.music ?? false, effects: saved?.effects ?? true };
     } catch {
       return { music: false, effects: true };
