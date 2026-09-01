@@ -125,6 +125,15 @@ function finishHTML(run: Run): string {
 function boardHTML(level: Level, run: Run, marked: Marker[]): string {
   const rows = level.grid.length;
   const cols = level.grid[0].length;
+  const occupied = level.grid.flatMap((row, r) =>
+    row.flatMap((tile, c) => (tile ? [c - r] : [])),
+  );
+  const minQ = Math.min(...occupied);
+  const maxQ = Math.max(...occupied);
+  // One tile is two half-widths wide, hence +2 around the occupied centre
+  // range. This trims only empty rectangular corners; level geometry is
+  // untouched and sparse boards use the full horizontal stage.
+  const spanX = maxQ - minQ + 2;
 
   // Raised ground is drawn *above* the flat board's box, so the box has to
   // make room for the tallest thing on the level or it centres by the wrong
@@ -135,7 +144,7 @@ function boardHTML(level: Level, run: Run, marked: Marker[]): string {
     ...level.grid.flatMap((row) => row.flatMap((tile) => (tile ? [topHeight(tile)] : []))),
   );
 
-  const fx = 2 / (cols + rows);
+  const fx = 2 / spanX;
   const fy = 1 / ((cols + rows - 2) / 4 + 0.8 + peak * 0.3);
 
   const tiles = level.grid
@@ -143,7 +152,7 @@ function boardHTML(level: Level, run: Run, marked: Marker[]): string {
     .join("");
 
   const dim = run.phase === "lost" ? " dim" : "";
-  const shape = `--cols:${cols};--rows:${rows};--peak:${peak};--fx:${fx.toFixed(5)};--fy:${fy.toFixed(5)}`;
+  const shape = `--cols:${cols};--rows:${rows};--min-q:${minQ};--span-x:${spanX};--peak:${peak};--fx:${fx.toFixed(5)};--fy:${fy.toFixed(5)}`;
   return `<div class="board${dim}" style="${shape}">${tiles}${markerLayer(level, run, marked)}</div>`;
 }
 

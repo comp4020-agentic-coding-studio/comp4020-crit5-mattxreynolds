@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "./levels";
 import type { Level, Tile } from "./types";
-import { validateLevel } from "./validate";
+import { holeAdjacencyProblems, validateLevel } from "./validate";
 
 // The vertex-height rule is the one PLAN.md found by rendering an invalid
 // level rather than by reasoning: height belongs to grid *vertices*, so a
@@ -86,16 +86,44 @@ describe("the vertex-height rule", () => {
   it("lets a sheer step stand where no ramp claims to bridge it", () => {
     // Flat tiles at different heights share vertices at different heights and
     // that is fine --- it is a cliff, and the climb rule is what blocks it.
-    const tiles = grid(1, 2);
+    const tiles = grid(1, 3);
     tiles[0][0] = { terrain: "hole", height: 0 };
-    tiles[0][1] = { terrain: "ground", height: 3 };
+    tiles[0][2] = { terrain: "ground", height: 3 };
     const level: Level = {
       id: 99,
       grid: tiles,
-      ball: { r: 0, c: 1 },
+      ball: { r: 0, c: 2 },
       hand: [{ kind: "move", value: 1 }],
     };
     expect(validateLevel(level)).toEqual([]);
+  });
+});
+
+describe("reachable rests beside the hole", () => {
+  it("rejects an adjacent non-winning rest while another card remains", () => {
+    const tiles = grid(1, 4);
+    tiles[0][3] = { terrain: "hole", height: 0 };
+    const level: Level = {
+      id: 99,
+      grid: tiles,
+      ball: { r: 0, c: 0 },
+      hand: [{ kind: "move", value: 2 }, { kind: "move", value: 1 }],
+    };
+    expect(holeAdjacencyProblems(level)).toEqual([
+      expect.stringContaining("rest at (0,2)"),
+    ]);
+  });
+
+  it("allows the same adjacent rest when it spends the final card", () => {
+    const tiles = grid(1, 4);
+    tiles[0][3] = { terrain: "hole", height: 0 };
+    const level: Level = {
+      id: 99,
+      grid: tiles,
+      ball: { r: 0, c: 0 },
+      hand: [{ kind: "move", value: 2 }],
+    };
+    expect(holeAdjacencyProblems(level)).toEqual([]);
   });
 });
 
