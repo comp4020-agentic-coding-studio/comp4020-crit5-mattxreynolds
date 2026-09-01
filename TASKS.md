@@ -35,17 +35,7 @@ private. T5 is where that gets discovered, not the morning of the cutoff.
 
 ## Backlog
 
-### T12 — Link-preview card *(independent)*
-
-`meta description` and the title are done (`027096c` — "Forethought", one
-sentence). `public/card.png` is still the Astro starter's placeholder
-("Replace this card") — swap it for a real screenshot of the game.
-
-**Done when:** the card is a screenshot of the actual game and the deployed
-`<head>` points at a URL that resolves.
-
-**Acceptance:** nothing in CI checks that the card path resolves, so verify it
-against the deployed page, not the local build.
+*(empty)*
 
 ---
 
@@ -63,6 +53,12 @@ against the deployed page, not the local build.
 
 ## Done
 
+- **T12 — Link-preview card** — `public/card.png` was still the Astro
+  starter's placeholder; replaced with a real 1200×630 render of L9 (the
+  raised block, sand, and hole) plus the hand of four cards, composed from
+  the live DOM at `?level=9` rather than a manual crop, so it uses the actual
+  rendered geometry and palette. `meta description` and the title were
+  already real (`027096c`).
 - **T13 — Play it, then change one thing because of playing it** — `cb11594`
   first clarified the direction controls (markers animate out from the ball,
   a translucent backing, arrow-key/WASD focus with Enter/Escape to
