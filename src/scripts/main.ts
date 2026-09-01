@@ -40,6 +40,7 @@ function start(root: HTMLElement): void {
   const opened = requestedLevel();
   let run: Run = startRun(LEVELS, opened);
   let busy = false;
+  let keyboardMode = false;
   const audio = new GameAudio();
 
   const syncAudioControls = (): void => {
@@ -95,6 +96,48 @@ function start(root: HTMLElement): void {
   }
   enter("booting");
   window.addEventListener("resize", placeHand);
+  root.addEventListener("pointerdown", () => { keyboardMode = false; });
+
+  const focusAfterPaint = (selector: string): void => {
+    if (!keyboardMode) return;
+    window.requestAnimationFrame(() =>
+      root.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true }),
+    );
+  };
+
+  window.addEventListener("keydown", (event) => {
+    keyboardMode = true;
+    if (busy) return;
+
+    if (event.key === "Escape" && run.armed !== null) {
+      const card = run.armed;
+      event.preventDefault();
+      run = arm(run, card);
+      paint();
+      focusAfterPaint(`[data-card='${card}']`);
+      return;
+    }
+
+    if (run.armed === null) return;
+    const direction: Partial<Record<string, Dir>> = {
+      ArrowUp: "ne",
+      ArrowRight: "se",
+      ArrowDown: "sw",
+      ArrowLeft: "nw",
+      w: "ne",
+      d: "se",
+      s: "sw",
+      a: "nw",
+    };
+    const dir = direction[event.key.length === 1 ? event.key.toLowerCase() : event.key];
+    if (!dir) return;
+    event.preventDefault();
+    // Keyboard direction input is deliberately two-step: first move the
+    // visible focus/highlight, then let Enter activate the real button. This
+    // makes an accidental direction key reversible before a card is spent.
+    root.querySelector<HTMLElement>(`[data-dir='${dir}']`)?.focus({ preventScroll: true });
+    audio.play("select");
+  });
 
   root.addEventListener("click", (event) => {
     const target = event.target as Element | null;
@@ -123,6 +166,7 @@ function start(root: HTMLElement): void {
       run = arm(run, Number(card.dataset.card));
       audio.play("select");
       paint();
+      if (run.armed !== null) focusAfterPaint("[data-dir='ne']");
       return;
     }
 
@@ -200,6 +244,9 @@ function start(root: HTMLElement): void {
     if (run.phase === "lost") audio.play("fail");
     if (move.outcome === "holed") root.classList.add("entering");
     paint();
+    if (run.phase === "play") focusAfterPaint("button.c:not(.spent)");
+    else if (run.phase === "lost") focusAfterPaint(".loss-restart");
+    else focusAfterPaint(".start-over");
     if (move.outcome === "holed") {
       window.setTimeout(() => root.classList.remove("entering"), motion(620));
     }

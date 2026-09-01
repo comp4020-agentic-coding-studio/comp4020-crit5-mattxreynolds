@@ -522,6 +522,10 @@ main {
 .sl-nw .pl.ar { transform: matrix(1, calc(0.5 + var(--tilt)), -1, 0.5, 0, 0) rotate(var(--rot)); }
 .sl-sw .pl.ar { transform: matrix(1, 0.5, -1, calc(0.5 - var(--tilt)), 0, 0) rotate(var(--rot)); }
 .sl-ne .pl.ar { transform: matrix(1, 0.5, -1, calc(0.5 + var(--tilt)), 0, 0) rotate(var(--rot)); }
+.sl-se .pl.direction-pad { transform: matrix(1, calc(0.5 - var(--tilt)), -1, 0.5, 0, 0); }
+.sl-nw .pl.direction-pad { transform: matrix(1, calc(0.5 + var(--tilt)), -1, 0.5, 0, 0); }
+.sl-sw .pl.direction-pad { transform: matrix(1, 0.5, -1, calc(0.5 - var(--tilt)), 0, 0); }
+.sl-ne .pl.direction-pad { transform: matrix(1, 0.5, -1, calc(0.5 + var(--tilt)), 0, 0); }
 
 /* Wider and much thicker on a slope: the plane it lies in is close to
    edge-on, so a flat-ground arrow drawn in it would come out a sliver. */
@@ -1114,6 +1118,40 @@ button.c:focus-visible {
   width: var(--w);
   height: var(--h);
   pointer-events: none;
+  transform-origin: center;
+  animation: direction-arrive 220ms cubic-bezier(0.2, 0.9, 0.25, 1.15) backwards;
+  transition: transform 0.12s;
+}
+
+/* The selector travels out from the ball, making the relationship between the
+   chosen card, the ball and these four controls visible without an instruction
+   or trajectory preview. */
+.dir-se { --from-x: -50%; --from-y: -50%; animation-delay: 20ms; }
+.dir-sw { --from-x: 50%; --from-y: -50%; animation-delay: 50ms; }
+.dir-nw { --from-x: 50%; --from-y: 50%; animation-delay: 80ms; }
+.dir-ne { --from-x: -50%; --from-y: 50%; }
+
+/* A marker needs its own piece of visual ground when its square is a gap or is
+   outside the board. It uses the same projected plane as the arrow, so both
+   lean together when the neighbouring square is a ramp. */
+.direction-pad i {
+  display: block;
+  width: calc(var(--w) * 0.42);
+  height: calc(var(--w) * 0.42);
+  background: rgba(253, 253, 250, 0.68);
+  filter: drop-shadow(0 3px 4px rgba(60, 74, 56, 0.2));
+  transition: background 0.12s, filter 0.12s, transform 0.12s;
+}
+
+.mk:has(.hit:hover) { transform: scale(1.045); }
+.mk:has(.hit:active) { transform: scale(0.965); }
+.mk:has(.hit:hover) .direction-pad i { background: rgba(253, 253, 250, 0.88); }
+.mk:has(.hit:hover) .tri,
+.mk:has(.hit:focus-visible) .tri { background: #c87832; }
+.mk:has(.hit:focus-visible) .direction-pad i {
+  background: rgba(253, 253, 250, 0.94);
+  filter: drop-shadow(2px 0 0 var(--card)) drop-shadow(-2px 0 0 var(--card))
+    drop-shadow(0 2px 0 var(--card)) drop-shadow(0 -2px 0 var(--card));
 }
 
 /* The tap target for an offered direction. Its own diamond over the tile's
@@ -1128,6 +1166,19 @@ button.c:focus-visible {
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   cursor: pointer;
   pointer-events: auto;
+}
+
+.hit:focus { outline: 0; }
+
+@keyframes direction-arrive {
+  from {
+    opacity: 0;
+    transform: translate(var(--from-x), var(--from-y)) scale(0.64);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 /* The board is inert except for its hit targets. Tiles overlap each other's

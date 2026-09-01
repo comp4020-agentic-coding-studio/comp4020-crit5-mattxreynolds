@@ -7,6 +7,7 @@ import {
   type Pos,
   type Tile,
   isRamp,
+  opposite,
   samePos,
   step,
   tileAt,
@@ -151,6 +152,13 @@ interface Marker {
   cell: Pos;
 }
 
+const DIRECTION_NAME: Record<Dir, string> = {
+  ne: "northeast",
+  se: "southeast",
+  sw: "southwest",
+  nw: "northwest",
+};
+
 /** Arrows live on the board, not inside tiles.
  *
  *  They have to: an arrow's square may be a gap in the board or past its edge,
@@ -159,22 +167,39 @@ interface Marker {
  *  nothing still lines up with the row it belongs to. */
 function markerLayer(level: Level, run: Run, marked: Marker[]): string {
   const standing = tileAt(level, run.ball);
+  const standingHeight = standing
+    ? standing.height + (isRamp(standing) ? 0.5 : 0)
+    : 0;
 
   return marked
     .map(({ dir, cell }) => {
       const tile = tileAt(level, cell);
       // Over a gap there is no ground to sit on, so the arrow keeps the height
       // the ball is at. On a ramp it sits halfway up, as the ball does.
-      const height = tile
+      const neighbourHeight = tile
         ? tile.height + (isRamp(tile) ? 0.5 : 0)
-        : (standing?.height ?? 0);
+        : standingHeight;
+      // A direction leaving high ground stays at the ball's elevation rather
+      // than dropping its control onto a lower flat neighbour. A ramp whose
+      // high edge meets that ground is different: travelling opposite its
+      // climb direction means going down the slope, so its control belongs on
+      // the ramp plane itself.
+      const descendsRamp =
+        tile &&
+        isRamp(tile) &&
+        dir === opposite(tile.ramp) &&
+        standingHeight === topHeight(tile);
+      const height = descendsRamp
+        ? neighbourHeight
+        : Math.max(standingHeight, neighbourHeight);
       const slope = tile && isRamp(tile) ? ` sl sl-${tile.ramp}` : "";
       const place = `--r:${cell.r};--c:${cell.c};--lv:${height}`;
 
       return [
-        `<div class="mk${slope}" style="${place}">`,
+        `<div class="mk dir-${dir}${slope}" style="${place}">`,
+        `<div class="pl direction-pad" aria-hidden="true"><i></i></div>`,
         `<div class="pl ar" style="--rot:${STEP[dir].rot}deg"><i class="tri"></i></div>`,
-        `<button class="hit" type="button" data-dir="${dir}" aria-label="Roll ${dir}"></button>`,
+        `<button class="hit" type="button" data-dir="${dir}" aria-label="Roll ${DIRECTION_NAME[dir]}"></button>`,
         `</div>`,
       ].join("");
     })

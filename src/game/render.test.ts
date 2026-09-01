@@ -104,6 +104,46 @@ describe("direction markers", () => {
     expect(doc.querySelectorAll(".ar").length).toBe(4);
   });
 
+  it("uses complete direction names and exposes direction classes for interaction feedback", () => {
+    const expected = ["northeast", "southeast", "southwest", "northwest"];
+    for (const [index, marker] of [...doc.querySelectorAll(".mk")].entries()) {
+      expect(marker.classList.contains(`dir-${["ne", "se", "sw", "nw"][index]}`)).toBe(true);
+      expect(marker.querySelector(".hit")?.getAttribute("aria-label")).toBe(`Roll ${expected[index]}`);
+    }
+  });
+
+  it("keeps a marker at the ball's height when the neighbouring tile is lower", () => {
+    const level: Level = {
+      id: 1,
+      grid: [[
+        { terrain: "ground", height: 1 },
+        { terrain: "ground", height: 0 },
+        { terrain: "hole", height: 0 },
+      ]],
+      ball: { r: 0, c: 0 },
+      hand: [{ kind: "move", value: 1 }],
+    };
+    const raised = dom(screenHTML(arm(startRun([level]), 0)));
+    expect(raised.querySelector(".dir-se")?.getAttribute("style")).toContain("--lv:1");
+  });
+
+  it("keeps a downhill marker on the ramp plane", () => {
+    const level: Level = {
+      id: 1,
+      grid: [[
+        { terrain: "ground", height: 0, ramp: "se" },
+        { terrain: "ground", height: 1 },
+        { terrain: "hole", height: 1 },
+      ]],
+      ball: { r: 0, c: 1 },
+      hand: [{ kind: "move", value: 1 }],
+    };
+    const downhill = dom(screenHTML(arm(startRun([level]), 0)));
+    const marker = downhill.querySelector(".dir-nw");
+    expect(marker?.classList.contains("sl-se")).toBe(true);
+    expect(marker?.getAttribute("style")).toContain("--lv:0.5");
+  });
+
   it("marks the screen armed so the CSS can reveal them", () => {
     expect(doc.querySelector(".screen")?.classList.contains("armed")).toBe(true);
   });

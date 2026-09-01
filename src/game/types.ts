@@ -51,7 +51,7 @@ export interface Tile {
   ramp?: Dir;
 }
 
-export function isRamp(tile: Tile): boolean {
+export function isRamp(tile: Tile): tile is Tile & { ramp: Dir } {
   return tile.ramp !== undefined;
 }
 
