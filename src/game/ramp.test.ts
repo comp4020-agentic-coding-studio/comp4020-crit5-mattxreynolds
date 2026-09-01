@@ -172,7 +172,9 @@ describe("a ball never comes to rest on a ramp", () => {
 describe("sand", () => {
   it("stops the ball dead the moment it enters", () => {
     const level = board("0s00", 0, move(3));
-    expect(roll(level, "se").landing).toEqual({ r: 0, c: 1 });
+    const result = roll(level, "se");
+    expect(result.landing).toEqual({ r: 0, c: 1 });
+    expect(result.stoppedBy).toBe("sand");
   });
 
   it("discards the rest of the movement rather than banking it", () => {
@@ -183,5 +185,10 @@ describe("sand", () => {
   it("can be left again on the next card", () => {
     const level = board("0s0h", 1, move(2));
     expect(roll(level, "se").outcome).toBe("holed");
+  });
+
+  it("reports sand when gravity carries a ramp move into it", () => {
+    const level = board("1\\s", 0, move(1));
+    expect(roll(level, "se").stoppedBy).toBe("sand");
   });
 });

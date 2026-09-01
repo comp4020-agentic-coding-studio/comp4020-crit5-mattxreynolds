@@ -91,6 +91,8 @@ export interface Move {
   /** The card still had distance left, but the next edge could not be
    *  crossed. The browser uses this to show the impact after the roll. */
   blocked?: boolean;
+  /** Terrain that consumed the remaining distance, for matching feedback. */
+  stoppedBy?: "sand";
 }
 
 export function tileAt(level: Level, p: Pos): Tile | null {

@@ -58,6 +58,11 @@ describe("jump", () => {
     expect(roll(level).outcome).toBe("holed");
   });
 
+  it("reports a landing in sand for matching feedback", () => {
+    const level = board([G(), G(), { terrain: "sand", height: 0 }], 0, jump(2));
+    expect(roll(level).stoppedBy).toBe("sand");
+  });
+
   it("is offered and falls when it would land off the board", () => {
     const level = board([G(), G()], 0, jump(3));
     const result = roll(level);

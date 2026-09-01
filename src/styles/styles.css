@@ -33,8 +33,11 @@
   /* board sizing budget: the field left over once gutters and hand are paid
      for. Overridden at the phone viewport. */
   --pad-x: 96px;
-  --pad-y: 320px;
+  /* Leave a little more of the desktop field to the hand below the platform.
+     The phone breakpoint keeps its independently tuned sizing budget. */
+  --pad-y: 384px;
   --w-max: 260px;
+  --stage-y: -24px;
 }
 
 html,
@@ -135,6 +138,8 @@ main {
   border-radius: 50%;
   background: #edf1e7;
   box-shadow: 0 0 0 2px rgba(253, 253, 250, 0.72);
+  transition: width 0.18s, height 0.18s, border-color 0.18s, background 0.18s,
+    box-shadow 0.18s;
 }
 
 .progress-step.done {
@@ -223,13 +228,47 @@ main {
   transform: translateX(-50%);
 }
 
+#game.tally-changed .run-tally {
+  animation: tally-tick 420ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+}
+
 .stage {
   position: relative;
+  top: var(--stage-y);
   display: grid;
   width: 100%;
   flex: 0 0 auto;
   place-items: center;
 }
+
+/* State enters share one quiet grammar: chrome settles first, the board rises,
+   then the finite hand deals in. The opening and every new level therefore
+   feel related without delaying the first available action. */
+#game.booting .top-bar,
+#game.booting .run-tally {
+  animation: chrome-in 420ms ease-out both;
+}
+
+#game.booting .stage,
+#game.entering .stage {
+  animation: board-in 440ms cubic-bezier(0.2, 0.85, 0.25, 1.05) both;
+}
+
+#game.booting .hand .c,
+#game.entering .hand .c {
+  animation: deal-card 330ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+#game.booting .hand .c:nth-child(2),
+#game.entering .hand .c:nth-child(2) { animation-delay: 45ms; }
+#game.booting .hand .c:nth-child(3),
+#game.entering .hand .c:nth-child(3) { animation-delay: 90ms; }
+#game.booting .hand .c:nth-child(4),
+#game.entering .hand .c:nth-child(4) { animation-delay: 135ms; }
+#game.booting .hand .c:nth-child(5),
+#game.entering .hand .c:nth-child(5) { animation-delay: 180ms; }
+#game.booting .hand .c:nth-child(6),
+#game.entering .hand .c:nth-child(6) { animation-delay: 225ms; }
 
 /* --- board -------------------------------------------------------------- */
 
@@ -559,12 +598,48 @@ main {
   transform: translate(-50%, -72%);
 }
 
+.sand-burst {
+  position: absolute;
+  z-index: 902;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.sand-burst i {
+  position: absolute;
+  width: calc(var(--burst) * 0.045);
+  height: calc(var(--burst) * 0.045);
+  border-radius: 50%;
+  background: #c8aa70;
+  animation: sand-grain 260ms ease-out both;
+  --gx: calc(var(--burst) * 0.18);
+  --gy: calc(var(--burst) * -0.08);
+}
+
+.sand-burst i:nth-child(2) { --gx: calc(var(--burst) * -0.17); --gy: calc(var(--burst) * -0.1); }
+.sand-burst i:nth-child(3) { --gx: calc(var(--burst) * 0.1); --gy: calc(var(--burst) * -0.16); }
+.sand-burst i:nth-child(4) { --gx: calc(var(--burst) * -0.08); --gy: calc(var(--burst) * -0.17); }
+.sand-burst i:nth-child(5) { --gx: calc(var(--burst) * 0.21); --gy: calc(var(--burst) * 0.02); }
+.sand-burst i:nth-child(6) { --gx: calc(var(--burst) * -0.2); --gy: calc(var(--burst) * 0.01); }
+
 /* --- the hand ----------------------------------------------------------- */
 
 .hand {
   display: flex;
   align-items: flex-end;
   justify-content: center;
+}
+
+/* The hand occupies the centre of the field left below the platform, rather
+   than moving up and down with the combined board+cards flex group. main.ts
+   sets --hand-y from the rendered board edge for every level and viewport. */
+.screen > .hand,
+.screen > .endcard {
+  position: absolute;
+  top: var(--hand-y, 78%);
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .c {
@@ -632,6 +707,7 @@ button.c:focus-visible {
 }
 
 .c.spent {
+  z-index: 0;
   background: #cdc7b6;
   box-shadow: none;
   cursor: default;
@@ -699,6 +775,14 @@ button.c:focus-visible {
   align-items: center;
   gap: var(--s3);
 }
+
+#game.entering .finished .finish { animation: goal-in 520ms ease-out both; }
+#game.entering .finished .flag::after {
+  transform-origin: 0 50%;
+  animation: flag-wave 520ms 220ms ease-in-out both;
+}
+#game.entering .finished .finish-message { animation-delay: 180ms; }
+#game.entering .finished .start-over { animation: action-in 360ms 360ms ease-out both; }
 
 /* The goal itself, at size, rather than the last board dimmed. It borrows the
    cup and flag exactly as the board draws them --- one --w knob is all they
@@ -814,6 +898,54 @@ button.c:focus-visible {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes chrome-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes board-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes deal-card {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--fan-y) + 18px)) rotate(var(--turn)) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(var(--fan-y)) rotate(var(--turn)) scale(1);
+  }
+}
+
+@keyframes tally-tick {
+  0% { transform: translateX(-50%) scale(1); }
+  48% { transform: translateX(-50%) scale(1.2) rotate(4deg); background: #fff7e9; }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+@keyframes sand-grain {
+  from { opacity: 0.85; transform: translate(0, 0) scale(1); }
+  to { opacity: 0; transform: translate(var(--gx), var(--gy)) scale(0.35); }
+}
+
+@keyframes goal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes flag-wave {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  35% { transform: skewY(-5deg) scaleX(0.9); }
+  70% { transform: skewY(3deg) scaleX(1.04); }
+}
+
+@keyframes action-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .endcard .c {
   margin: 0 var(--s1) 0 0;
 }
@@ -874,6 +1006,7 @@ button.c:focus-visible {
     --pad-x: 24px;
     --pad-y: 264px;
     --w-max: 150px;
+    --stage-y: 0px;
   }
 
   .screen {
@@ -910,6 +1043,8 @@ button.c:focus-visible {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation-delay: 0ms !important;
   }
 }
 

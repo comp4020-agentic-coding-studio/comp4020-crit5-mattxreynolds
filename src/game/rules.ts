@@ -58,7 +58,9 @@ function resolveMove(level: Level, from: Pos, value: number, dir: Dir): Move {
 
     // Sand stops the ball dead on entry and the rest of the movement is
     // discarded, not banked.
-    if (tile.terrain === "sand") break;
+    if (tile.terrain === "sand") {
+      return { ...settle(level, path, dir), stoppedBy: "sand" };
+    }
   }
 
   return settle(level, path, dir);
@@ -87,6 +89,8 @@ function resolveJump(level: Level, from: Pos, value: number, dir: Dir): Move {
   // line down to the foot, exactly as a roll does when its steps run out on a
   // ramp --- settle() already knows how, given the direction of the fall.
   if (isRamp(tile)) return settle(level, path, opposite(tile.ramp as Dir));
+
+  if (tile.terrain === "sand") return { path, landing, outcome: "stopped", stoppedBy: "sand" };
 
   return { path, landing, outcome: "stopped" };
 }
@@ -124,7 +128,10 @@ function settle(level: Level, path: Pos[], dir: Dir): Move {
       tile = onto;
 
       if (isHole(onto)) return { path, landing: at, outcome: "holed" };
-      if (onto.terrain === "sand" || !isRamp(onto)) break;
+      if (onto.terrain === "sand") {
+        return { path, landing: at, outcome: "stopped", stoppedBy: "sand" };
+      }
+      if (!isRamp(onto)) break;
     }
     return { path, landing: at, outcome: "stopped" };
   }

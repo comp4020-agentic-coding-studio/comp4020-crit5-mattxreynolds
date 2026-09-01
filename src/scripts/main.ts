@@ -7,7 +7,8 @@ import { STEP, type Dir, type Pos, isRamp } from "../game/types";
 // Wiring: events in, render out. Everything it decides, it asks the engine.
 
 const STEP_MS = 140;
-const HOLED_PAUSE_MS = 260;
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const motion = (ms: number): number => (REDUCED_MOTION ? Math.min(ms, 45) : ms);
 
 /** The offsets .ball and .shdw carry in CSS, which every animated transform
  *  has to keep or the ball jumps as the animation starts. */
@@ -39,13 +40,46 @@ function start(root: HTMLElement): void {
   let run: Run = startRun(LEVELS, opened);
   let busy = false;
 
+  const placeHand = (): void => {
+    const screen = root.querySelector<HTMLElement>(".screen");
+    const stage = root.querySelector<HTMLElement>(".stage");
+    const board = root.querySelector<HTMLElement>(".board");
+    const hand = root.querySelector<HTMLElement>(".screen > .hand, .endcard");
+    if (!screen || !stage || !board || !hand) return;
+
+    // offsetTop/offsetHeight describe the settled layout even while an entry
+    // transform is running. The hand belongs halfway through the free field
+    // below the platform, whatever shape this level happens to be.
+    const stageShift = Number.parseFloat(getComputedStyle(stage).top) || 0;
+    const boardBottom =
+      stage.offsetTop + stageShift + board.offsetTop + board.offsetHeight;
+    const screenBottom = screen.clientHeight;
+    const halfHand = hand.offsetHeight / 2;
+    const wanted = boardBottom + (screenBottom - boardBottom) / 2;
+    const clearOfBoard = boardBottom + halfHand + 12;
+    const clearOfEdge = screenBottom - halfHand - 12;
+    screen.style.setProperty(
+      "--hand-y",
+      `${Math.min(Math.max(wanted, clearOfBoard), clearOfEdge)}px`,
+    );
+  };
+
   const paint = (): void => {
     root.innerHTML = screenHTML(run);
+    placeHand();
+  };
+
+  const enter = (kind = "entering"): void => {
+    root.classList.add(kind);
+    window.setTimeout(() => root.classList.remove(kind), motion(620));
   };
 
   // The server already rendered level 1, so the only reason to paint on load
   // is having been asked for a different one.
   if (opened > 0) paint();
+  else placeHand();
+  enter("booting");
+  window.addEventListener("resize", placeHand);
 
   root.addEventListener("click", (event) => {
     if (busy) return;
@@ -54,10 +88,7 @@ function start(root: HTMLElement): void {
 
     const restartButton = target.closest("[data-act='restart']");
     if (restartButton) {
-      // Once the run is over the same control starts a new one, from the top,
-      // with the score back to zero --- there is no level left to restart.
-      run = run.phase === "finished" ? startRun(LEVELS) : restart(run);
-      paint();
+      void restartLevel();
       return;
     }
 
@@ -71,6 +102,22 @@ function start(root: HTMLElement): void {
     const hit = target.closest<HTMLElement>("[data-dir]");
     if (hit && run.armed !== null) void take(hit.dataset.dir as Dir);
   });
+
+  async function restartLevel(): Promise<void> {
+    busy = true;
+    await leaveScreen(180);
+    // Once the run is over this starts a new one from the top; otherwise the
+    // tally ticks up while the same level resets beneath stationary chrome.
+    const wholeRun = run.phase === "finished";
+    run = wholeRun ? startRun(LEVELS) : restart(run);
+    root.classList.add("entering", wholeRun ? "run-started" : "tally-changed");
+    paint();
+    window.setTimeout(
+      () => root.classList.remove("entering", "run-started", "tally-changed"),
+      motion(620),
+    );
+    busy = false;
+  }
 
   /** Roll the ball, then commit. The animation runs on the board as it stands,
    *  so the ball is seen leaving the tile it was on; the state changes when it
@@ -94,22 +141,95 @@ function start(root: HTMLElement): void {
       busy = false;
       return;
     }
-    const settled = await roll(move.path, level.hand[index].kind === "jump");
+    const settled = await roll(
+      move.path,
+      level.hand[index].kind === "jump",
+      move.outcome !== "fell",
+    );
     if (move.blocked) await bump(dir, settled);
+    if (move.stoppedBy === "sand") await sandStop(settled);
+    const spent = spendCard(index);
     if (move.outcome === "holed") {
-      await sink(settled);
-      await wait(HOLED_PAUSE_MS);
+      await Promise.all([sink(settled), spent, completeProgress()]);
+      await wait(motion(80));
+      await leaveScreen(160);
     } else if (move.outcome === "fell") {
-      await fallAway(settled);
+      await Promise.all([fallAway(settled), spent]);
+    } else {
+      await spent;
     }
     run = playCard(run, index, move);
+    if (move.outcome === "holed") root.classList.add("entering");
     paint();
+    if (move.outcome === "holed") {
+      window.setTimeout(() => root.classList.remove("entering"), motion(620));
+    }
     busy = false;
+  }
+
+  async function spendCard(index: number): Promise<void> {
+    const card = root.querySelector<HTMLElement>(`[data-card='${index}']`);
+    if (!card) return;
+    const pose = getComputedStyle(card).transform;
+    await card
+      .animate(
+        [
+          { opacity: 1, filter: "grayscale(0)", transform: pose },
+          {
+            opacity: 0.58,
+            filter: "grayscale(0.72)",
+            transform: `${pose} translateY(4px) scale(0.96)`,
+          },
+        ],
+        { duration: motion(190), easing: "ease-out", fill: "forwards" },
+      )
+      .finished.catch(() => undefined);
+  }
+
+  async function completeProgress(): Promise<void> {
+    const current = root.querySelector<HTMLElement>(".progress-step.current");
+    const next = current?.nextElementSibling as HTMLElement | null;
+    const animations: Animation[] = [];
+    if (current) {
+      animations.push(
+        current.animate(
+          [
+            { transform: "scale(1)", background: "var(--card)" },
+            { transform: "scale(1.35)", background: "#728b68", offset: 0.55 },
+            { transform: "scale(0.72)", background: "#728b68" },
+          ],
+          { duration: motion(260), easing: "ease-out", fill: "forwards" },
+        ),
+      );
+    }
+    if (next) {
+      animations.push(
+        next.animate(
+          [{ transform: "scale(0.7)" }, { transform: "scale(1.45)" }, { transform: "scale(1)" }],
+          { duration: motion(300), delay: motion(120), easing: "ease-out" },
+        ),
+      );
+    }
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  }
+
+  async function leaveScreen(ms: number): Promise<void> {
+    const pieces = root.querySelectorAll<HTMLElement>(".stage, .hand, .result");
+    const animations = [...pieces].map((piece) =>
+      piece.animate(
+        [
+          { opacity: 1, transform: "translateY(0) scale(1)" },
+          { opacity: 0, transform: "translateY(10px) scale(0.97)" },
+        ],
+        { duration: motion(ms), easing: "ease-in", fill: "forwards" },
+      ),
+    );
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
   }
 
   /** Animate the ball tile by tile along the path it actually took, and report
    *  where it came to rest so a holing ball can carry on into the cup. */
-  async function roll(path: Pos[], arcs: boolean): Promise<Settled | null> {
+  async function roll(path: Pos[], arcs: boolean, lands: boolean): Promise<Settled | null> {
     const board = root.querySelector<HTMLElement>(".board");
     const ball = root.querySelector<HTMLElement>(".ball");
     const shadow = root.querySelector<HTMLElement>(".shdw");
@@ -179,9 +299,11 @@ function start(root: HTMLElement): void {
     const hop = w * (0.34 + 0.1 * tiles);
     const SAMPLES = 16;
     const jumpDuration = Math.max(340, STEP_MS * tiles);
+    const landingDuration = lands ? 100 : 0;
     const tailDuration = STEP_MS * Math.max(0, path.length - 2);
-    const totalDuration = jumpDuration + tailDuration;
+    const totalDuration = jumpDuration + landingDuration + tailDuration;
     const jumpShare = jumpDuration / totalDuration;
+    const landingShare = (jumpDuration + landingDuration) / totalDuration;
 
     const thrown = (base: string, ground: boolean): Keyframe[] =>
       Array.from({ length: SAMPLES + 1 }, (_, i) => {
@@ -198,15 +320,29 @@ function start(root: HTMLElement): void {
         ...frame,
         offset: (i / SAMPLES) * jumpShare,
       }));
-      if (path.length === 2) return jump;
+      const touchdown: Keyframe[] = lands
+        ? [
+            {
+              transform: `translate(${end.dx}px, ${end.dy}px) ${base} ${ground ? "scale(1.16)" : "scale(0.9, 1.08)"}`,
+              offset: jumpShare,
+              easing: "ease-out",
+            },
+            {
+              transform: `translate(${end.dx}px, ${end.dy}px) ${base}`,
+              offset: landingShare,
+              easing: "ease-in",
+            },
+          ]
+        : [];
+      if (path.length === 2) return [...jump, ...touchdown];
 
-      const ontoTail = jump[jump.length - 1];
+      const ontoTail = touchdown[touchdown.length - 1] ?? jump[jump.length - 1];
       const firstDrop = heights[2] - heights[1];
       ontoTail.easing = firstDrop > 0 ? "ease-out" : firstDrop < 0 ? "ease-in" : "linear";
 
       const tail = offsets.slice(2).map(({ dx, dy }, i) => ({
         transform: `translate(${dx}px, ${dy}px) ${base}`,
-        offset: jumpShare + ((i + 1) / (path.length - 2)) * (1 - jumpShare),
+        offset: landingShare + ((i + 1) / (path.length - 2)) * (1 - landingShare),
         easing: "linear",
       }));
       return [...jump, ...tail];
@@ -217,7 +353,7 @@ function start(root: HTMLElement): void {
       : (base: string): Keyframe[] => rolled(base);
 
     const timing: KeyframeAnimationOptions = {
-      duration: arcs ? totalDuration : STEP_MS * (path.length - 1),
+      duration: motion(arcs ? totalDuration : STEP_MS * (path.length - 1)),
       fill: "forwards",
     };
 
@@ -247,7 +383,7 @@ function start(root: HTMLElement): void {
       { transform: `translate(${dx}px, ${dy}px) ${base}`, offset: 0.4 },
       { transform: `translate(0, 0) ${base}` },
     ];
-    const timing: KeyframeAnimationOptions = { duration: 260, easing: "ease-in-out" };
+    const timing: KeyframeAnimationOptions = { duration: motion(260), easing: "ease-in-out" };
 
     const leaning = [ball.animate(lean(BALL_BASE), timing)];
     if (shadow) leaning.push(shadow.animate(lean(SHADOW_BASE), timing));
@@ -274,10 +410,43 @@ function start(root: HTMLElement): void {
       { transform: at(base, -bx * 0.28, -by * 0.28), offset: 0.68 },
       { transform: at(base), offset: 1 },
     ];
-    const timing: KeyframeAnimationOptions = { duration: 260, easing: "ease-out", fill: "forwards" };
+    const timing: KeyframeAnimationOptions = { duration: motion(260), easing: "ease-out", fill: "forwards" };
     const bounced = [ball.animate(frames(BALL_BASE), timing)];
     if (shadow) bounced.push(shadow.animate(frames(SHADOW_BASE), timing));
     await Promise.all(bounced.map((a) => a.finished.catch(() => undefined)));
+  }
+
+  /** Sand consumes the remaining distance. A small burst at the landing tile
+   *  and a shallow settle make the terrain, rather than an invisible rule,
+   *  visibly responsible for the stop. */
+  async function sandStop(settled: Settled | null): Promise<void> {
+    const board = root.querySelector<HTMLElement>(".board");
+    const ball = root.querySelector<HTMLElement>(".ball");
+    if (!board || !ball || !settled) return;
+    const { dx, dy, w } = settled;
+    const burst = document.createElement("div");
+    burst.className = "sand-burst";
+    burst.style.left = `${Number.parseFloat(ball.style.left) + dx}px`;
+    burst.style.top = `${Number.parseFloat(ball.style.top) + dy}px`;
+    burst.style.setProperty("--burst", `${w}px`);
+    burst.innerHTML = "<i></i><i></i><i></i><i></i><i></i><i></i>";
+    board.appendChild(burst);
+
+    const at = (extra = ""): string => `translate(${dx}px, ${dy}px) ${BALL_BASE} ${extra}`;
+    await Promise.all([
+      ball
+        .animate(
+          [
+            { transform: at() },
+            { transform: at(`translateY(${w * 0.035}px) scale(0.97)`), offset: 0.55 },
+            { transform: at() },
+          ],
+          { duration: motion(260), easing: "ease-out", fill: "forwards" },
+        )
+        .finished.catch(() => undefined),
+      wait(motion(260)),
+    ]);
+    burst.remove();
   }
 
   /** Re-parent an element onto the board, keeping it exactly where it looks
@@ -311,7 +480,7 @@ function start(root: HTMLElement): void {
           { transform: at(`translateY(${w * 0.1}px) scale(0.62)`), opacity: 1, offset: 0.55 },
           { transform: at(`translateY(${w * 0.16}px) scale(0.45)`), opacity: 0, offset: 1 },
         ],
-        { duration: 300, easing: "ease-in", fill: "forwards" },
+        { duration: motion(300), easing: "ease-in", fill: "forwards" },
       )
       .finished.catch(() => undefined);
   }
@@ -336,7 +505,7 @@ function start(root: HTMLElement): void {
           { transform: at(`translateY(${w * 0.35}px) scale(0.8)`), opacity: 0.5, offset: 0.6 },
           { transform: at(`translateY(${w * 0.7}px) scale(0.5)`), opacity: 0, offset: 1 },
         ],
-        { duration: 480, easing: "ease-in", fill: "forwards" },
+        { duration: motion(480), easing: "ease-in", fill: "forwards" },
       )
       .finished.catch(() => undefined);
   }
