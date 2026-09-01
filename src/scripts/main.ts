@@ -337,8 +337,14 @@ function start(root: HTMLElement): void {
     // z-index instead makes the whole slab jump in front of the terrain that
     // should be occluding it, because a tile is a stacking context and the
     // ball can't escape it from the inside.
-    lift(board, ball, 0.72, 901);
-    if (shadow) lift(board, shadow, 0.3, 900);
+    const depthAt = (p: Pos): number => p.r + p.c;
+
+    // Once detached, the pieces must still participate in the board's
+    // isometric painter's order. Put the shadow first so the ball wins their
+    // shared depth, then vary that depth along the animation path so terrain
+    // closer to the viewer can correctly pass in front of both pieces.
+    if (shadow) lift(board, shadow, 0.3, depthAt(path[0]));
+    lift(board, ball, 0.72, depthAt(path[0]));
 
     const level = currentLevel(run);
 
@@ -368,7 +374,10 @@ function start(root: HTMLElement): void {
     const heights = path.map(heightAt);
     const rolled = (base: string): Keyframe[] =>
       offsets.map(({ dx, dy }, i) => {
-        const frame: Keyframe = { transform: `translate(${dx}px, ${dy}px) ${base}` };
+        const frame: Keyframe = {
+          transform: `translate(${dx}px, ${dy}px) ${base}`,
+          zIndex: String(depthAt(path[i])),
+        };
         if (i < heights.length - 1) {
           const rise = heights[i + 1] - heights[i];
           frame.easing = rise > 0 ? "ease-out" : rise < 0 ? "ease-in" : "linear";
@@ -404,7 +413,14 @@ function start(root: HTMLElement): void {
         const dx = end.dx * t;
         const dy = end.dy * t - (ground ? 0 : hop * lift);
         const scale = ground ? `scale(${(1 - 0.4 * lift).toFixed(3)})` : "";
-        return { transform: `translate(${dx}px, ${dy}px) ${base} ${scale}`, easing: "linear" };
+        const depth = Math.round(
+          path[0].r + path[0].c + ((path[1].r + path[1].c) - (path[0].r + path[0].c)) * t,
+        );
+        return {
+          transform: `translate(${dx}px, ${dy}px) ${base} ${scale}`,
+          zIndex: String(depth),
+          easing: "linear",
+        };
       });
 
     const jumpedThenRolled = (base: string, ground = false): Keyframe[] => {
@@ -416,11 +432,13 @@ function start(root: HTMLElement): void {
         ? [
             {
               transform: `translate(${end.dx}px, ${end.dy}px) ${base} ${ground ? "scale(1.16)" : "scale(0.9, 1.08)"}`,
+              zIndex: String(depthAt(path[1])),
               offset: jumpShare,
               easing: "ease-out",
             },
             {
               transform: `translate(${end.dx}px, ${end.dy}px) ${base}`,
+              zIndex: String(depthAt(path[1])),
               offset: landingShare,
               easing: "ease-in",
             },
@@ -434,6 +452,7 @@ function start(root: HTMLElement): void {
 
       const tail = offsets.slice(2).map(({ dx, dy }, i) => ({
         transform: `translate(${dx}px, ${dy}px) ${base}`,
+        zIndex: String(depthAt(path[i + 2])),
         offset: landingShare + ((i + 1) / (path.length - 2)) * (1 - landingShare),
         easing: "linear",
       }));
