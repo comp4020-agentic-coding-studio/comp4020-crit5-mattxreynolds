@@ -12,11 +12,13 @@ The other half was true, and I took it on anyway, because a flat board could
 only say "wall" with a darker green square where a raised slab says it without
 words. That is the spec line I am most exposed on.
 
-The cost is real and I should be honest that it is still unpaid. Height added
-three rules to teach wordlessly — a sheer step blocks you, a ramp doesn't but
-you need the run-up, and a jump reaches what neither does — in the same six to
-eight levels that already have to teach the cards. That is now the top risk in
-my plan, ahead of the engine, and `jump` is marked as the first thing to cut.
+The cost was real, and I can now say it was paid. Height meant three rules to
+teach wordlessly on top of the cards, and `jump` was the one I'd marked to cut
+first if the budget ran out. It didn't get cut. Twelve levels shipped, four of
+them combining what the rest taught one at a time — L11 puts a roll's
+sand-stop and a jump's fixed reach on the identical tile, and only one order of
+playing them leaves a card able to clear the gap after. That's a level doing
+with rules what the flat board could only have done with a sign.
 
 ## What did this work change about who I want to be as a software developer?
 
